@@ -1,0 +1,7 @@
+# pnpm 12 lee su configuracion de este archivo, no de package.json.
+# Solo se habilitan los paquetes que compilan codigo nativo:
+# esbuild (drizzle-kit, tsx), oxide (Tailwind 4) y sharp (imagenes de Next).
+allowBuilds:
+  esbuild: true
+  '@tailwindcss/oxide': true
+  sharp: true
