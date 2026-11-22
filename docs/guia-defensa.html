@@ -94,6 +94,7 @@ body.menu-open{overflow:hidden}
 a{color:inherit;text-decoration-color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}
 a:hover{color:var(--accent);text-decoration-thickness:2px}
 p{margin:0 0 22px}
+code{overflow-wrap:anywhere}
 img,svg{display:block;max-width:100%}
 button,input{font:inherit}
 button{cursor:pointer}
@@ -199,13 +200,13 @@ main{padding:0 40px}
 .prose li{margin:6px 0;font-size:16.5px;line-height:1.55}
 .prose strong{font-weight:600}
 .prose em{font-style:italic}
-.prose code{font-family:var(--mono);font-size:.86em;background:var(--paper-3);border:1px solid var(--rule);padding:1px 5px;border-radius:3px}
+.prose code{font-family:var(--mono);font-size:.86em;background:var(--paper-3);border:1px solid var(--rule);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
 
 /* ============================================================
    FIGURES
    ============================================================ */
 .figure{max-width:960px;margin:40px auto}
-.figure .frame{border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.figure .frame{border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--card);overscroll-behavior-x:contain}
 .figure svg{width:100%;height:auto}
 .figure figcaption{display:flex;gap:12px;margin-top:12px;font-family:var(--sans);font-size:13px;line-height:1.55;color:var(--muted);max-width:78ch}
 .fig-no{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);flex:none;padding-top:2px}
@@ -261,7 +262,7 @@ main{padding:0 40px}
 /* ============================================================
    TABLES
    ============================================================ */
-.tablewrap{max-width:960px;margin:32px auto;overflow:auto;border:1px solid var(--rule);border-radius:var(--r);background:var(--card)}
+.tablewrap{max-width:960px;margin:32px auto;overflow:auto;overscroll-behavior-x:contain;border:1px solid var(--rule);border-radius:var(--r);background:var(--card)}
 table{border-collapse:collapse;width:100%;min-width:640px;font-family:var(--sans);font-size:14px}
 th{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule);background:var(--paper-2);position:sticky;top:0;z-index:1}
 td{padding:11px 14px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5}
