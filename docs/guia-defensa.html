@@ -254,6 +254,8 @@ main{padding:0 40px}
 .concept h3{flex:1;min-width:180px;font-family:var(--sans);font-size:23px;font-weight:700;line-height:1.2;letter-spacing:-.02em;margin:0}
 .concept-def{font-size:18px;line-height:1.58;margin:0 0 20px;max-width:66ch}
 .concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;border-top:1px solid var(--rule);padding-top:18px}
+.concept-grid > div:nth-child(3):last-child{grid-column:1 / -1}
+.concept .prose{margin-top:22px}
 .concept-grid h4{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 6px;font-weight:400}
 .concept-grid p{font-size:16px;line-height:1.55;color:var(--ink-2);margin:0;max-width:44ch}
 .concept-src{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin:18px 0 0}
@@ -524,21 +526,22 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
     <nav class="toc" aria-label="Contenido">
       <p class="toc-label">Contenido</p>
-      <a href="#mapa"><span>01</span>Mapa</a>
+            <a href="#mapa"><span>01</span>Mapa</a>
       <a href="#tesis"><span>02</span>Tesis</a>
-      <a href="#modelo"><span>03</span>Modelo</a>
-      <a href="#datos"><span>04</span>Datos</a>
-      <a href="#conceptos"><span>05</span>Conceptos</a>
-      <a href="#flujos"><span>06</span>Flujos</a>
-      <a href="#api"><span>07</span>API</a>
-      <a href="#defensa"><span>08</span>Defensa</a>
-      <a href="#cambios"><span>09</span>Cambios</a>
-      <a href="#practica"><span>10</span>Práctica</a>
-      <a href="#trampas"><span>11</span>Trampas</a>
-      <a href="#publicacion"><span>12</span>Publicación</a>
-      <a href="#ia"><span>13</span>IA</a>
-      <a href="#fuentes"><span>14</span>Fuentes</a>
-      <a href="#bitacora"><span>15</span>Bitácora</a>
+      <a href="#tecnologia"><span>03</span>Tecnología</a>
+      <a href="#modelo"><span>04</span>Modelo</a>
+      <a href="#datos"><span>05</span>Datos</a>
+      <a href="#conceptos"><span>06</span>Conceptos</a>
+      <a href="#flujos"><span>07</span>Flujos</a>
+      <a href="#api"><span>08</span>API</a>
+      <a href="#defensa"><span>09</span>Defensa</a>
+      <a href="#cambios"><span>10</span>Cambios</a>
+      <a href="#practica"><span>11</span>Práctica</a>
+      <a href="#trampas"><span>12</span>Trampas</a>
+      <a href="#publicacion"><span>13</span>Publicación</a>
+      <a href="#ia"><span>14</span>IA</a>
+      <a href="#fuentes"><span>15</span>Fuentes</a>
+      <a href="#bitacora"><span>16</span>Bitácora</a>
     </nav>
 
     <div class="rail-foot">
@@ -680,7 +683,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 <tr><td class="model">Roles</td><td class="num">2</td><td><code>admin</code> y <code>vendedor</code></td></tr>
                 <tr><td class="model">Módulos</td><td class="num">5</td><td>Inicio, Ventas, Productos, Clientes, Usuarios</td></tr>
                 <tr><td class="model">Reglas de negocio</td><td class="num">12</td><td>Sección 6 del enunciado, todas en servicios</td></tr>
-                <tr><td class="model">Preguntas de defensa</td><td class="num">38</td><td>Sección 08 de esta guía, con respuesta y archivo</td></tr>
+                <tr><td class="model">Preguntas de defensa</td><td class="num">38</td><td>Sección 09 de esta guía, con respuesta y archivo</td></tr>
               </tbody>
             </table>
           </div>
@@ -708,10 +711,10 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <div class="prose">
             <h3>Cómo usar esta guía</h3>
             <ul>
-              <li>Leé las secciones 02 y 03 una vez, sin código. Son el modelo mental.</li>
-              <li>Recorré la sección 06 con el código abierto al lado. Cada flujo termina con la frase que tenés que poder decir.</li>
-              <li>Usá la sección 08 como autoevaluación: la pregunta está visible, la respuesta se abre con un clic. Si no la podés contestar antes de abrirla, volvé al flujo.</li>
-              <li>Hacé los cambios de la sección 09 en una rama aparte. El día de la defensa te van a pedir uno parecido.</li>
+              <li>Leé las secciones 02, 03 y 04 una vez, sin código. Son el modelo mental.</li>
+              <li>Recorré la sección 07 con el código abierto al lado. Cada flujo termina con la frase que tenés que poder decir.</li>
+              <li>Usá la sección 09 como autoevaluación: la pregunta está visible, la respuesta se abre con un clic. Si no la podés contestar antes de abrirla, volvé al flujo.</li>
+              <li>Hacé los cambios de la sección 10 en una rama aparte. El día de la defensa te van a pedir uno parecido.</li>
             </ul>
           </div>
         </section>
@@ -752,9 +755,422 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         </section>
 
         <!-- ================= 03 MODELO ================= -->
-        <section class="section" id="modelo">
+<section class="section" id="tecnologia">
           <div class="sec-head">
             <span class="sec-no" aria-hidden="true">03</span>
+            <div>
+              <h2>Tecnología</h2>
+              <p class="sec-dek">Nueve piezas, una por una: qué es cada una, cómo funciona por dentro y qué hace exactamente en este sistema.</p>
+            </div>
+          </div>
+
+          <div class="prose">
+            <p>Cada pieza del stack resuelve un problema distinto. Si sabés cuál es el problema, la herramienta se explica sola. Esta sección recorre las nueve en el orden en que se encuentran al leer el código: el lenguaje, la interfaz, el framework, el acceso a datos, el motor, el contrato de datos, el estilo, la sesión y el entorno.</p>
+            <p>Para cada una hay cuatro cosas: qué es, cómo funciona por dentro, cómo se usa acá y qué <em>no</em> hace. La última es la que más preguntan, porque es donde se confunde una herramienta con otra.</p>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Pieza</th><th>Qué es</th><th>Dónde vive</th><th>Qué resuelve</th></tr></thead>
+              <tbody>
+                <tr><td class="model">TypeScript</td><td>Lenguaje</td><td><code>*.ts</code>, <code>*.tsx</code></td><td>Errores de tipo antes de ejecutar</td></tr>
+                <tr><td class="model">React</td><td>Biblioteca de interfaz</td><td><code>src/app/**/*.tsx</code></td><td>Pantallas que reaccionan al estado</td></tr>
+                <tr><td class="model">Next.js</td><td>Framework sobre React</td><td><code>src/app</code></td><td>Rutas, servidor, render y build</td></tr>
+                <tr><td class="model">Drizzle</td><td>ORM tipado</td><td><code>src/db</code></td><td>Consultas con tipos y migraciones</td></tr>
+                <tr><td class="model">libSQL / Turso</td><td>Motor y servicio</td><td><code>local.db</code> o la nube</td><td>Guardar los datos</td></tr>
+                <tr><td class="model">Zod</td><td>Validación</td><td><code>src/lib/schemas.ts</code></td><td>Rechazar datos inválidos en runtime</td></tr>
+                <tr><td class="model">Tailwind</td><td>CSS por utilidades</td><td><code>globals.css</code> y <code>className</code></td><td>Estilo consistente sin CSS suelto</td></tr>
+                <tr><td class="model">bcrypt + jose</td><td>Seguridad</td><td><code>src/server/auth.ts</code></td><td>Contraseñas y sesión firmada</td></tr>
+                <tr><td class="model">Node + pnpm + Vercel</td><td>Entorno</td><td><code>package.json</code></td><td>Ejecutar, instalar y publicar</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="concepts">
+          <!-- 01 TYPESCRIPT -->
+          <article class="concept" id="t-typescript">
+            <header class="concept-head"><span class="concept-no">01</span><h3>TypeScript</h3><span class="pill">Lenguaje</span></header>
+            <p class="concept-def">JavaScript con tipos. Los tipos se revisan mientras programás y después se borran: lo que corre en el navegador y en el servidor es JavaScript puro, sin ninguna información de tipos.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>El compilador lee el programa, arma el árbol de tipos y avisa cuando algo no cierra. Ese chequeo ocurre una sola vez, en el build. Si el dato viene de afuera —un formulario, un JSON, la base— el tipo es una promesa que nadie verificó.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>El esquema de Drizzle es la fuente: <code>typeof productos.$inferSelect</code> produce el tipo <code>Producto</code> y no se escribe dos veces. Los servicios reciben y devuelven esos tipos, así el editor avisa si una columna cambia de nombre.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No valida en runtime. Un <code>precio: number</code> no impide que llegue <code>"abc"</code> por HTTP. Para eso está Zod, y por eso el servicio valida aunque el tipo diga que está bien.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/db/schema.ts</code> · <code>tsc --noEmit</code> dentro de <code>next build</code></p>
+
+            <figure class="code">
+              <p class="cap"><b>Un tipo, una fuente</b><span>El tipo de fila sale del esquema</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-com">// src/db/schema.ts</span>
+<span class="t-kw">export</span> <span class="t-kw">const</span> <span class="t-var">productos</span> = <span class="t-fn">sqliteTable</span>(<span class="t-str">'productos'</span>, {
+  <span class="t-var">codigo</span>: <span class="t-fn">text</span>(<span class="t-str">'codigo'</span>).<span class="t-fn">notNull</span>(),
+  <span class="t-var">precio</span>: <span class="t-fn">integer</span>(<span class="t-str">'precio'</span>).<span class="t-fn">notNull</span>(),   <span class="t-com">// centavos, siempre entero</span>
+})
+
+<span class="t-com">// El tipo de una fila se deriva. Si mañana renombrás una columna,</span>
+<span class="t-com">// el error aparece en todos lados y no en uno solo.</span>
+<span class="t-kw">export</span> <span class="t-kw">type</span> <span class="t-typ">Producto</span> = <span class="t-ctl">typeof</span> <span class="t-var">productos</span>.<span class="t-var">$inferSelect</span></code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿TypeScript alcanza para validar lo que manda el usuario?». No. TypeScript desaparece al compilar; el navegador puede mandar cualquier cosa. El tipo ordena el código, Zod cuida la frontera.</p>
+            </div>
+          </article>
+
+          <!-- 02 REACT -->
+          <article class="concept" id="t-react">
+            <header class="concept-head"><span class="concept-no">02</span><h3>React</h3><span class="pill">Interfaz</span></header>
+            <p class="concept-def">Una biblioteca para describir la pantalla como función del estado. No se dice «cambiá este texto»: se dice «con este estado, la pantalla es así», y React calcula qué partes del DOM hay que tocar.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>Un componente es una función que devuelve JSX. Cuando cambia el estado, React vuelve a ejecutarla, compara el árbol nuevo con el anterior —reconciliación— y aplica solo las diferencias al DOM. Los hooks se guardan por posición: por eso no van dentro de un <code>if</code>.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>La pantalla de venta es un Client Component: mantiene el carrito en estado y recalcula subtotales y total en cada cambio. Los listados y las fichas son Server Components: consultan la base y no mandan JavaScript de más.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No sabe de rutas, ni de HTTP, ni de base de datos. No decide reglas: si el total se puede calcular, se calcula; no se guarda como estado para que no se desincronice.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/app/(panel)/ventas/nueva/</code> · <code>src/app/(panel)/ventas/</code></p>
+
+            <div class="prose">
+              <p><strong>El estado mínimo.</strong> El carrito guarda qué producto y cuánta cantidad. El subtotal y el total no son estado: se derivan. Si se guardaran, habría dos verdades y tarde o temprano una quedaría vieja. La misma regla que el saldo del cliente: se calcula, no se escribe.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Estado y derivados</b><span>Lo que se guarda y lo que se calcula</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-str">'use client'</span>
+
+<span class="t-kw">export</span> <span class="t-kw">function</span> <span class="t-typ">Carrito</span>({ <span class="t-var">catalogo</span> }: { <span class="t-var">catalogo</span>: <span class="t-typ">Producto</span>[] }) {
+  <span class="t-kw">const</span> [<span class="t-var">items</span>, <span class="t-var">setItems</span>] = <span class="t-var">useState</span>&lt;<span class="t-typ">Item</span>[]&gt;([])
+
+  <span class="t-com">// El total no es estado: sale de los items en cada render.</span>
+  <span class="t-kw">const</span> <span class="t-var">total</span> = <span class="t-var">items</span>.<span class="t-fn">reduce</span>((<span class="t-var">suma</span>, <span class="t-var">i</span>) =&gt; <span class="t-var">suma</span> + <span class="t-var">i</span>.<span class="t-var">precio</span> * <span class="t-var">i</span>.<span class="t-var">cantidad</span>, <span class="t-num">0</span>)
+
+  <span class="t-kw">function</span> <span class="t-fn">agregar</span>(<span class="t-var">producto</span>: <span class="t-typ">Producto</span>) {
+    <span class="t-fn">setItems</span>((<span class="t-var">previos</span>) =&gt; {
+      <span class="t-kw">const</span> <span class="t-var">existe</span> = <span class="t-var">previos</span>.<span class="t-fn">find</span>((<span class="t-var">i</span>) =&gt; <span class="t-var">i</span>.<span class="t-var">productoId</span> === <span class="t-var">producto</span>.<span class="t-var">id</span>)
+      <span class="t-ctl">if</span> (<span class="t-var">existe</span>) {
+        <span class="t-ctl">return</span> <span class="t-var">previos</span>.<span class="t-fn">map</span>((<span class="t-var">i</span>) =&gt;
+          <span class="t-var">i</span>.<span class="t-var">productoId</span> === <span class="t-var">producto</span>.<span class="t-var">id</span> ? { ...<span class="t-var">i</span>, <span class="t-var">cantidad</span>: <span class="t-var">i</span>.<span class="t-var">cantidad</span> + <span class="t-num">1</span> } : <span class="t-var">i</span>,
+        )
+      }
+      <span class="t-ctl">return</span> [...<span class="t-var">previos</span>, { <span class="t-var">productoId</span>: <span class="t-var">producto</span>.<span class="t-var">id</span>, <span class="t-var">precio</span>: <span class="t-var">producto</span>.<span class="t-var">precio</span>, <span class="t-var">cantidad</span>: <span class="t-num">1</span> }]
+    })
+  }
+
+  <span class="t-ctl">return</span> &lt;<span class="t-var">p</span>&gt;<span class="t-typ">Total</span>: {<span class="t-fn">formatearPesos</span>(<span class="t-var">total</span>)}&lt;/<span class="t-var">p</span>&gt;
+}</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿Por qué el total no está en el estado?». Porque el estado es para lo que no se puede deducir. Guardar el total obliga a actualizarlo en cada alta, baja y cambio de cantidad; derivarlo elimina esa clase de error.</p>
+            </div>
+          </article>
+
+          <!-- 03 NEXT -->
+          <article class="concept" id="t-next">
+            <header class="concept-head"><span class="concept-no">03</span><h3>Next.js</h3><span class="pill">Framework</span></header>
+            <p class="concept-def">El framework que envuelve a React y agrega lo que React no trae: ruteo por archivos, un servidor, render en el servidor, bundle y build. Una carpeta es una ruta y un archivo es una pantalla.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>El App Router arma el árbol de rutas con las carpetas de <code>src/app</code>. <code>page.tsx</code> es la pantalla, <code>layout.tsx</code> la envuelve y se conserva entre navegaciones, <code>route.ts</code> es un endpoint HTTP. Los componentes son de servidor por defecto: se ejecutan en el servidor y mandan HTML. <code>"use client"</code> marca la frontera y ahí sí viaja JavaScript.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p><code>src/app/(panel)/layout.tsx</code> dibuja la barra lateral y verifica la sesión una sola vez. Las páginas de listado consultan la base directo. Las mutaciones pasan por Route Handlers o Server Actions, que llaman a los servicios. <code>/login</code> queda fuera del grupo para no mostrar el panel.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No es la base de datos ni el ORM, y no decide reglas de negocio. Un Server Component puede llamar a un servicio, pero el servicio sigue siendo el que verifica el rol y el stock.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/app/layout.tsx</code> · <code>src/app/(panel)/layout.tsx</code> · <code>src/app/api/</code></p>
+
+            <div class="prose">
+              <h3>Qué viaja al navegador</h3>
+              <p>Un Server Component se ejecuta en el servidor y al cliente le llega el HTML ya armado. Puede leer la base, usar el token de sesión y tocar variables de entorno sin que nada de eso cruce la red. Un Client Component, en cambio, viaja como JavaScript y se hidrata en el navegador: ahí sí hay estado, eventos y <code>useEffect</code>.</p>
+              <p>La regla práctica: <code>"use client"</code> va lo más abajo posible del árbol. Si se pone en el layout, todo el panel se vuelve cliente y se pierde la mitad del beneficio. En este sistema la frontera está en el carrito y en los formularios, no en las páginas.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Dos formas de entrar</b><span>Una página y un endpoint</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-com">// src/app/(panel)/ventas/page.tsx · Server Component</span>
+<span class="t-kw">export</span> <span class="t-ctl">default</span> <span class="t-kw">async</span> <span class="t-kw">function</span> <span class="t-typ">Ventas</span>() {
+  <span class="t-kw">const</span> <span class="t-var">filas</span> = <span class="t-ctl">await</span> <span class="t-fn">listarVentas</span>({ <span class="t-var">limite</span>: <span class="t-num">50</span> })
+  <span class="t-ctl">return</span> &lt;<span class="t-typ">TablaVentas</span> <span class="t-var">filas</span>={<span class="t-var">filas</span>} /&gt;
+}
+
+<span class="t-com">// src/app/api/productos/route.ts · endpoint HTTP</span>
+<span class="t-kw">export</span> <span class="t-kw">async</span> <span class="t-kw">function</span> <span class="t-fn">GET</span>() {
+  <span class="t-kw">const</span> <span class="t-var">productos</span> = <span class="t-ctl">await</span> <span class="t-fn">listarProductos</span>()
+  <span class="t-ctl">return</span> <span class="t-typ">NextResponse</span>.<span class="t-fn">json</span>({ <span class="t-var">data</span>: <span class="t-var">productos</span> })
+}</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿Por qué Next y no React solo?». Porque React solo dibuja: habría que escribir el servidor, el ruteo, el bundler y el render del primer HTML. Next trae eso resuelto y, sobre todo, permite que la base y la sesión queden del lado del servidor.</p>
+            </div>
+          </article>
+
+          <!-- 04 DRIZZLE -->
+          <article class="concept" id="t-drizzle">
+            <header class="concept-head"><span class="concept-no">04</span><h3>Drizzle ORM</h3><span class="pill">Datos</span></header>
+            <p class="concept-def">Un ORM tipado: el esquema se declara en TypeScript y las consultas se escriben con métodos que terminan en SQL parametrizado. No hay archivos de modelo aparte ni un lenguaje propio: el esquema <em>es</em> el código.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p><code>sqliteTable</code> declara la tabla y cada columna. De ahí salen los tipos de fila y de inserción. El query builder arma el SQL y manda los valores como parámetros, nunca concatenados. <code>drizzle-kit generate</code> compara el esquema con la última migración y escribe el SQL; <code>migrate</code> lo aplica y lo anota en <code>__drizzle_migrations</code>.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p><code>src/db/schema.ts</code> tiene las diez tablas. Los servicios consultan con <code>db.select()</code>, <code>db.insert()</code> y <code>db.update()</code>. La venta entera corre dentro de <code>db.transaction()</code>: número, factura, ítems, stock y cuenta corriente se confirman juntos o no se confirma ninguno.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No aplica reglas de negocio ni reemplaza a Zod. Tampoco “optimiza” la transacción: la atomicidad la garantiza el motor, Drizzle solo emite <code>BEGIN</code>, <code>COMMIT</code> y <code>ROLLBACK</code>.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/db/schema.ts</code> · <code>drizzle.config.ts</code> · <code>drizzle/</code></p>
+
+            <div class="prose">
+              <p><strong>La migración es un archivo, no un botón mágico.</strong> <code>generate</code> produce un <code>.sql</code> con <code>CREATE TABLE</code>, <code>ALTER TABLE</code> e índices. Ese archivo se revisa, se versiona y se aplica igual en la máquina de cada uno y en producción. Si el esquema cambia, se genera otra migración; nunca se edita la base a mano.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Consulta y transacción</b><span>El mismo ORM para leer y para escribir</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-com">// Una lectura: SQL armado con métodos, valores parametrizados.</span>
+<span class="t-kw">const</span> <span class="t-var">filas</span> = <span class="t-ctl">await</span> <span class="t-var">db</span>
+  .<span class="t-fn">select</span>({ <span class="t-var">numero</span>: <span class="t-var">facturas</span>.<span class="t-var">numero</span>, <span class="t-var">total</span>: <span class="t-var">facturas</span>.<span class="t-var">total</span> })
+  .<span class="t-kw">from</span>(<span class="t-var">facturas</span>)
+  .<span class="t-fn">where</span>(<span class="t-fn">eq</span>(<span class="t-var">facturas</span>.<span class="t-var">estado</span>, <span class="t-str">'emitida'</span>))
+  .<span class="t-fn">orderBy</span>(<span class="t-fn">desc</span>(<span class="t-var">facturas</span>.<span class="t-var">fecha</span>))
+  .<span class="t-fn">limit</span>(<span class="t-num">20</span>)
+
+<span class="t-com">// Una escritura: todo o nada.</span>
+<span class="t-ctl">return</span> <span class="t-var">db</span>.<span class="t-fn">transaction</span>(<span class="t-kw">async</span> (<span class="t-var">tx</span>) =&gt; {
+  <span class="t-kw">const</span> <span class="t-var">numero</span> = <span class="t-ctl">await</span> <span class="t-fn">siguienteNumero</span>(<span class="t-var">tx</span>, <span class="t-str">`factura:</span>${<span class="t-var">puntoVenta</span>}<span class="t-str">`</span>)
+  <span class="t-kw">const</span> [<span class="t-var">factura</span>] = <span class="t-ctl">await</span> <span class="t-var">tx</span>.<span class="t-fn">insert</span>(<span class="t-var">facturas</span>).<span class="t-fn">values</span>({ ... }).<span class="t-fn">returning</span>()
+  <span class="t-ctl">await</span> <span class="t-var">tx</span>.<span class="t-fn">insert</span>(<span class="t-var">facturaItems</span>).<span class="t-fn">values</span>(<span class="t-var">items</span>)
+  <span class="t-com">// ...</span>
+  <span class="t-ctl">return</span> <span class="t-var">factura</span>
+})</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿Por qué Drizzle y no Prisma?». Porque el esquema se escribe una vez en TypeScript, no hay motor binario que descargar y la migración es SQL legible. Para SQLite y Turso, además, Drizzle habla libSQL directo.</p>
+            </div>
+          </article>
+
+          <!-- 05 LIBSQL -->
+          <article class="concept" id="t-turso">
+            <header class="concept-head"><span class="concept-no">05</span><h3>SQLite, libSQL y Turso</h3><span class="pill">Motor</span></header>
+            <p class="concept-def">Tres nombres para una misma idea: la base es un archivo con tablas y habla SQL. SQLite es el motor, libSQL es un fork con protocolo de red y Turso es el servicio que lo corre en la nube.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>SQLite no tiene proceso aparte: la biblioteca abre el archivo y lee páginas. Con WAL se puede leer mientras se escribe. Las escrituras se serializan: un solo escritor a la vez, y eso es lo que hace simple la atomicidad. libSQL mantiene el formato y agrega HTTP y réplicas. Turso aloja ese archivo y da una URL y un token.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>Una sola variable manda: <code>DATABASE_URL</code>. En desarrollo es <code>file:./local.db</code>; en producción es <code>libsql://...</code> con <code>DATABASE_AUTH_TOKEN</code>. El cliente es el mismo y las migraciones son las mismas. No hay dos versiones del código.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No es Postgres: no hay muchos escritores en paralelo ni pool de conexiones. Cada escritura espera su turno. Para un comercio con pocas cajas es más que suficiente, y a cambio no hay servidor que administrar.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/db/client.ts</code> · <code>.env</code> · <code>drizzle.config.ts</code></p>
+
+            <div class="prose">
+              <p><strong>Por qué alcanza.</strong> El sistema tiene escrituras cortas y espaciadas: una venta cada tanto, un pago, un ajuste de stock. La transacción de la factura dura milisegundos y serializa el número. La lectura, que es lo que más se hace, no bloquea. Cambiar a un motor con más concurrencia sería resolver un problema que este comercio no tiene.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Un cliente, dos destinos</b><span>La URL decide</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-com">// src/db/client.ts</span>
+<span class="t-kw">const</span> <span class="t-var">cliente</span> = <span class="t-fn">createClient</span>({
+  <span class="t-var">url</span>: <span class="t-var">process</span>.<span class="t-var">env</span>.<span class="t-var">DATABASE_URL</span> ?? <span class="t-str">'file:./local.db'</span>,
+  <span class="t-var">authToken</span>: <span class="t-var">process</span>.<span class="t-var">env</span>.<span class="t-var">DATABASE_AUTH_TOKEN</span>,
+})
+
+<span class="t-kw">export</span> <span class="t-kw">const</span> <span class="t-var">db</span> = <span class="t-fn">drizzle</span>(<span class="t-var">cliente</span>, { <span class="t-var">schema</span> })</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿Qué pasa si Turso se cae?». La aplicación responde error, pero no corrompe nada: la transacción no se confirma. La base queda en el último estado consistente. Eso es lo que compra la atomicidad.</p>
+            </div>
+          </article>
+
+          <!-- 06 ZOD -->
+          <article class="concept" id="t-zod">
+            <header class="concept-head"><span class="concept-no">06</span><h3>Zod</h3><span class="pill">Contrato</span></header>
+            <p class="concept-def">Validación en tiempo de ejecución. El esquema es un objeto que se ejecuta sobre el dato y devuelve el valor limpio o la lista de errores. Además infiere el tipo de TypeScript, así que no hay que escribirlo dos veces.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p><code>parse</code> lanza una excepción si el dato no cumple; <code>safeParse</code> devuelve <code>{ success, data }</code> o <code>{ success, error }</code>. <code>transform</code> normaliza —mayúsculas, dígitos—, <code>refine</code> agrega una regla propia y <code>z.infer</code> saca el tipo.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>Cada servicio valida su entrada antes de tocar la base: <code>productoSchema</code>, <code>facturaSchema</code>, <code>pagoSchema</code>. Si falla, responde <code>400</code> con el detalle por campo y no abre la transacción. La interfaz usa los mismos esquemas para avisar antes.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No reemplaza las restricciones de la base. Que el código sea único lo garantiza un índice <code>UNIQUE</code>; Zod solo lo avisa temprano. La base es la última palabra, sobre todo con dos cajas escribiendo a la vez.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/lib/schemas.ts</code> · <code>src/lib/errors.ts</code></p>
+
+            <div class="prose">
+              <p><strong>Dos capas, dos mensajes.</strong> Zod da el mensaje útil: «el precio tiene que ser mayor que cero». La base da la garantía: el <code>CHECK</code> o el <code>UNIQUE</code> no se pueden saltear. Una capa sin la otra deja huecos: sin Zod, el usuario ve un error de SQL; sin restricciones, una carrera puede duplicar el código.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Validar y normalizar</b><span>El dato entra limpio al servicio</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-kw">export</span> <span class="t-kw">const</span> <span class="t-var">productoSchema</span> = <span class="t-var">z</span>.<span class="t-kw">object</span>({
+  <span class="t-var">codigo</span>: <span class="t-var">z</span>.<span class="t-kw">string</span>().<span class="t-fn">trim</span>().<span class="t-fn">min</span>(<span class="t-num">1</span>).<span class="t-fn">max</span>(<span class="t-num">20</span>).<span class="t-fn">transform</span>((<span class="t-var">s</span>) =&gt; <span class="t-var">s</span>.<span class="t-fn">toUpperCase</span>()),
+  <span class="t-var">descripcion</span>: <span class="t-var">z</span>.<span class="t-kw">string</span>().<span class="t-fn">trim</span>().<span class="t-fn">min</span>(<span class="t-num">2</span>).<span class="t-fn">max</span>(<span class="t-num">120</span>),
+  <span class="t-var">precio</span>: <span class="t-var">z</span>.<span class="t-kw">number</span>().<span class="t-fn">int</span>().<span class="t-fn">positive</span>(),   <span class="t-com">// centavos</span>
+})
+
+<span class="t-kw">const</span> <span class="t-var">datos</span> = <span class="t-var">productoSchema</span>.<span class="t-fn">safeParse</span>(<span class="t-var">input</span>)
+<span class="t-ctl">if</span> (!<span class="t-var">datos</span>.<span class="t-var">success</span>) {
+  <span class="t-ctl">throw</span> <span class="t-kw">new</span> <span class="t-typ">ApiError</span>(<span class="t-num">400</span>, <span class="t-str">'VALIDACION'</span>, <span class="t-str">'Datos inválidos'</span>, <span class="t-var">datos</span>.<span class="t-var">error</span>.<span class="t-fn">flatten</span>())
+}</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «Si valido en el formulario, ¿hace falta validar en el servidor?». Sí. El formulario se puede saltear con <code>curl</code>. La validación del cliente es una comodidad; la del servidor es la regla.</p>
+            </div>
+          </article>
+
+          <!-- 07 TAILWIND -->
+          <article class="concept" id="t-tailwind">
+            <header class="concept-head"><span class="concept-no">07</span><h3>Tailwind CSS</h3><span class="pill">Estilo</span></header>
+            <p class="concept-def">CSS por utilidades. En vez de inventar un nombre de clase por cada bloque, se combinan clases chicas en el <code>className</code>. Tailwind lee el código y genera solo el CSS que se usa.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>En el build, Tailwind recorre los archivos, encuentra las clases y emite las reglas correspondientes. Los colores, radios y espaciados salen de tokens declarados con <code>@theme</code>. El resultado es un CSS chico y sin nombres inventados.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>Los componentes llevan las clases en línea. Los tokens —papel, tinta, acento, borde— viven en <code>globals.css</code> y se usan como <code>bg-paper</code> o <code>text-ink</code>. Un cambio de paleta se hace en un lugar.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>No genera clases armadas en runtime: <code>bg-${color}</code> no existe para el compilador. Si el color es dinámico, se elige entre clases completas o se pasa por variable CSS.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/app/globals.css</code> · <code>postcss.config.mjs</code></p>
+          </article>
+
+          <!-- 08 SESION -->
+          <article class="concept" id="t-sesion">
+            <header class="concept-head"><span class="concept-no">08</span><h3>bcrypt y jose</h3><span class="pill">Seguridad</span></header>
+            <p class="concept-def">Dos herramientas para dos problemas distintos. bcrypt guarda la contraseña de forma irreversible; jose firma la sesión para que el servidor sepa quién está hablando sin consultar la base en cada pedido.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>bcrypt aplica un hash con sal y un costo configurable: comparar tarda unos 100 ms, y eso frena la fuerza bruta. Nunca se puede volver al texto original; se compara el hash. jose firma un JWT con <code>HS256</code> y el secreto de <code>AUTH_SECRET</code>; si alguien cambia un dato, la firma deja de cerrar.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p>El login busca el usuario activo, compara con <code>bcrypt.compare</code> y firma un token con el id y el rol. El token va en una cookie <code>httpOnly</code>, <code>sameSite=lax</code>, que JavaScript no puede leer. El layout la verifica en cada pedido.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>El JWT no cifra: cualquiera puede leer su contenido. Por eso lleva solo <code>sub</code> y <code>rol</code>, nunca la contraseña ni datos sensibles. Y el rol del token no alcanza: el servicio vuelve a verificar contra la base.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>src/server/auth.ts</code> · <code>src/app/login/</code></p>
+
+            <div class="prose">
+              <p><strong>Por qué el rol se verifica dos veces.</strong> El token dice qué rol tenía el usuario cuando inició sesión. Si el administrador lo desactiva, el token sigue vivo hasta que vence. Por eso el servicio consulta el usuario y su estado antes de dejar pasar una operación sensible: la sesión identifica, la base autoriza.</p>
+            </div>
+
+            <figure class="code">
+              <p class="cap"><b>Firmar la sesión</b><span>Ocho horas, un solo secreto</span></p>
+<pre><code class="lang-ts" data-lang="ts"><span class="t-kw">const</span> <span class="t-var">secreto</span> = <span class="t-kw">new</span> <span class="t-typ">TextEncoder</span>().<span class="t-fn">encode</span>(<span class="t-var">process</span>.<span class="t-var">env</span>.<span class="t-var">AUTH_SECRET</span>)
+
+<span class="t-kw">const</span> <span class="t-var">token</span> = <span class="t-ctl">await</span> <span class="t-kw">new</span> <span class="t-typ">SignJWT</span>({ <span class="t-var">rol</span>: <span class="t-var">usuario</span>.<span class="t-var">rol</span> })
+  .<span class="t-fn">setProtectedHeader</span>({ <span class="t-var">alg</span>: <span class="t-str">'HS256'</span> })
+  .<span class="t-fn">setSubject</span>(<span class="t-fn">String</span>(<span class="t-var">usuario</span>.<span class="t-var">id</span>))
+  .<span class="t-fn">setExpirationTime</span>(<span class="t-str">'8h'</span>)
+  .<span class="t-fn">sign</span>(<span class="t-var">secreto</span>)</code></pre>
+            </figure>
+
+            <div class="note">
+              <p><strong>Si te preguntan:</strong> «¿Por qué no guardás la contraseña?». Porque si roban la base, con el hash no pueden usarla. Y por qué no se guarda el rol como única verdad: porque un usuario desactivado conservaría su token hasta el vencimiento.</p>
+            </div>
+          </article>
+
+          <!-- 09 ENTORNO -->
+          <article class="concept" id="t-entorno">
+            <header class="concept-head"><span class="concept-no">09</span><h3>Node, pnpm y Vercel</h3><span class="pill">Entorno</span></header>
+            <p class="concept-def">El entorno donde todo corre. Node ejecuta JavaScript del lado del servidor, pnpm instala las dependencias y fija versiones, y Vercel construye y publica la aplicación.</p>
+            <div class="concept-grid">
+              <div>
+                <h4>Cómo funciona</h4>
+                <p>Node interpreta el JavaScript del servidor y expone sistema de archivos y red. pnpm guarda los paquetes una vez y los enlaza; el <code>pnpm-lock.yaml</code> fija la versión exacta de cada dependencia. Vercel corre <code>pnpm build</code> y despliega el resultado como funciones.</p>
+              </div>
+              <div>
+                <h4>Cómo se usa acá</h4>
+                <p><code>pnpm dev</code> levanta el servidor local con recarga. <code>pnpm build</code> verifica tipos y compila. En Vercel se cargan <code>DATABASE_URL</code>, <code>DATABASE_AUTH_TOKEN</code> y <code>AUTH_SECRET</code> como variables de entorno, nunca en el código.</p>
+              </div>
+              <div>
+                <h4>Qué no hace</h4>
+                <p>Las variables de entorno no llegan al navegador salvo que empiecen con <code>NEXT_PUBLIC_</code>. Y eso no es un detalle: todo lo que lleva ese prefijo queda visible para cualquiera.</p>
+              </div>
+            </div>
+            <p class="concept-src">En el código · <code>package.json</code> · <code>.env.example</code> · <code>pnpm-lock.yaml</code></p>
+          </article>
+          </div>
+
+          <!-- 10 RECORRIDO -->
+          <div class="prose">
+            <h3>El recorrido completo de una venta</h3>
+            <p>Con las nueve piezas en la cabeza, una venta se lee como una cadena. Cada paso tiene un responsable y un archivo. Si te piden que la expliques, este es el orden.</p>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Paso</th><th>Quién</th><th>Qué pasa</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td class="model">React</td><td>El vendedor agrega productos. El carrito cambia de estado y el total se recalcula.</td></tr>
+                <tr><td>2</td><td class="model">Next.js</td><td>Al confirmar, el formulario llama a una Server Action o hace <code>POST</code> al Route Handler.</td></tr>
+                <tr><td>3</td><td class="model">Next.js</td><td>El adaptador lee la cookie, verifica la sesión y toma los parámetros.</td></tr>
+                <tr><td>4</td><td class="model">Zod</td><td>El servicio valida el cuerpo. Si algo falta, responde <code>400</code> y no toca la base.</td></tr>
+                <tr><td>5</td><td class="model">Servicio</td><td>Verifica el rol, el stock y el límite de crédito. Abre la transacción.</td></tr>
+                <tr><td>6</td><td class="model">Drizzle</td><td>Emite <code>BEGIN</code>, el <code>UPDATE</code> condicional de stock, los <code>INSERT</code> y el número del comprobante.</td></tr>
+                <tr><td>7</td><td class="model">libSQL</td><td>Ejecuta contra SQLite local o Turso. Si una escritura falla, <code>ROLLBACK</code>.</td></tr>
+                <tr><td>8</td><td class="model">Drizzle</td><td>Devuelve la factura creada con su número.</td></tr>
+                <tr><td>9</td><td class="model">Next.js</td><td>Traduce el resultado a JSON o revalida la página y redirige al comprobante.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="prose">
+            <p><strong>La frase para cerrar.</strong> «Cada pieza tiene un trabajo y una sola responsabilidad: React describe, Next rutea y ejecuta, Zod valida, el servicio decide, Drizzle traduce y SQLite guarda. Si muevo una regla de lugar, se rompe la cadena.»</p>
+          </div>
+        </section>
+        <section class="section" id="modelo">
+          <div class="sec-head">
+            <span class="sec-no" aria-hidden="true">04</span>
             <div>
               <h2>Modelo</h2>
               <p class="sec-dek">Cinco capas, una dirección. La regla baja, el dato sube.</p>
@@ -926,7 +1342,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 04 DATOS ================= -->
         <section class="section" id="datos">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">04</span>
+            <span class="sec-no" aria-hidden="true">05</span>
             <div>
               <h2>Datos</h2>
               <p class="sec-dek">Nueve tablas, una de apoyo y tres decisiones que se defienden solas.</p>
@@ -1157,7 +1573,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 05 CONCEPTOS ================= -->
         <section class="section" id="conceptos">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">05</span>
+            <span class="sec-no" aria-hidden="true">06</span>
             <div>
               <h2>Conceptos</h2>
               <p class="sec-dek">Las 18 piezas que tenés que poder explicar con tus palabras.</p>
@@ -1388,7 +1804,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 06 FLUJOS ================= -->
         <section class="section" id="flujos">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">06</span>
+            <span class="sec-no" aria-hidden="true">07</span>
             <div>
               <h2>Flujos</h2>
               <p class="sec-dek">El código que tenés que poder recorrer con el dedo. Los nombres pueden variar; el orden, no.</p>
@@ -1909,7 +2325,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 07 API ================= -->
         <section class="section" id="api">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">07</span>
+            <span class="sec-no" aria-hidden="true">08</span>
             <div>
               <h2>API</h2>
               <p class="sec-dek">31 rutas, una forma de error y una regla: el adaptador no decide.</p>
@@ -2141,7 +2557,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 08 DEFENSA ================= -->
         <section class="section" id="defensa">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">08</span>
+            <span class="sec-no" aria-hidden="true">09</span>
             <div>
               <h2>Defensa</h2>
               <p class="sec-dek">Las 38 preguntas del enunciado, con respuesta corta y el archivo para mostrar.</p>
@@ -2149,7 +2565,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </div>
 
           <div class="prose">
-            <p>Usá esta sección como autoevaluación. Leé la pregunta, contestala en voz alta y recién después abrí la respuesta. Si la respuesta te sorprende, volvé al flujo de la sección 06. El día de la defensa no necesitás recitar: necesitás abrir el archivo correcto y explicar qué hace.</p>
+            <p>Usá esta sección como autoevaluación. Leé la pregunta, contestala en voz alta y recién después abrí la respuesta. Si la respuesta te sorprende, volvé al flujo de la sección 07. El día de la defensa no necesitás recitar: necesitás abrir el archivo correcto y explicar qué hace.</p>
           </div>
 
           <div class="qa-controls">
@@ -2685,7 +3101,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 <li><strong>Interfaz:</strong> layouts, tablas, formularios y estados; el diseño es propio.</li>
                 <li><strong>Pruebas:</strong> scripts de concurrencia, consistencia y datos de ejemplo.</li>
               </ul>
-              <p class="qa-trap"><b>Si te repreguntan</b>El agente no decide las reglas. Nosotros le dimos el enunciado, revisamos cada invariante y probamos los bordes. La bitácora de la sección 13 tiene los errores y las correcciones.</p>
+              <p class="qa-trap"><b>Si te repreguntan</b>El agente no decide las reglas. Nosotros le dimos el enunciado, revisamos cada invariante y probamos los bordes. La bitácora de la sección 14 tiene los errores y las correcciones.</p>
             </div>
           </details>
 
@@ -2695,7 +3111,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <p><strong>Respuesta corta.</strong> El agente propuso asignar el número con <code>MAX(numero) + 1</code> fuera de la transacción. En una prueba de dos ventas simultáneas, las dos leían el mismo máximo. Lo cambiamos por el contador dentro de la transacción.</p>
               <p><strong>Cómo se detectó.</strong> Con el script de concurrencia: dos <code>POST /api/facturas</code> en paralelo y una consulta a <code>facturas</code>. Aparecían dos facturas con el mismo número o un hueco.</p>
               <p><strong>Otro ejemplo.</strong> Generó los importes como <code>real</code> y comparaba totales con <code>===</code>. El total no cerraba por centavos. Lo pasamos a <code>integer</code> en centavos y a <code>formatearMoneda</code> solo en la vista.</p>
-              <p class="qa-trap"><b>Si te repreguntan</b>Tené a mano el commit o el diff de la corrección. La respuesta “lo corregimos” sin mostrar el cambio no cuenta. La bitácora de la sección 13 está para eso.</p>
+              <p class="qa-trap"><b>Si te repreguntan</b>Tené a mano el commit o el diff de la corrección. La respuesta “lo corregimos” sin mostrar el cambio no cuenta. La bitácora de la sección 14 está para eso.</p>
             </div>
           </details>
         </section>
@@ -2703,7 +3119,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 09 CAMBIOS ================= -->
         <section class="section" id="cambios">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">09</span>
+            <span class="sec-no" aria-hidden="true">10</span>
             <div>
               <h2>Cambios pequeños</h2>
               <p class="sec-dek">Los seis del enunciado, con el orden exacto y el archivo que tenés que tocar.</p>
@@ -2850,7 +3266,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 10 PRÁCTICA ================= -->
         <section class="section" id="practica">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">10</span>
+            <span class="sec-no" aria-hidden="true">11</span>
             <div>
               <h2>Práctica</h2>
               <p class="sec-dek">La lista de control, la demo de 10 minutos y las pruebas que no se pueden olvidar.</p>
@@ -2861,7 +3277,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <p>Esta sección es la que se usa el día anterior. Marcá lo que ya probaste. Si algo no está marcado, no lo des por sabido: abrilo y comprobalo.</p>
           </div>
 
-          <div class="check-progress"><span>Lista de control de la sección 10.8</span><span id="checkCount">0 / 10</span></div>
+          <div class="check-progress"><span>Lista de control de la sección 11.8</span><span id="checkCount">0 / 10</span></div>
           <ul class="checklist">
             <li><input type="checkbox" id="check-1"><label for="check-1">Ninguna ruta ni Server Action contiene reglas de negocio: solo llaman a un servicio.</label></li>
             <li><input type="checkbox" id="check-2"><label for="check-2">Un vendedor que llama directamente a una ruta de administrador recibe <code>403</code>.</label></li>
@@ -3021,7 +3437,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 11 TRAMPAS ================= -->
         <section class="section" id="trampas">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">11</span>
+            <span class="sec-no" aria-hidden="true">12</span>
             <div>
               <h2>Trampas</h2>
               <p class="sec-dek">Los errores que se detectan en la defensa, con la señal exacta que los delata.</p>
@@ -3095,7 +3511,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 12 PUBLICACIÓN ================= -->
         <section class="section" id="publicacion">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">12</span>
+            <span class="sec-no" aria-hidden="true">13</span>
             <div>
               <h2>Publicación</h2>
               <p class="sec-dek">Vercel para la app, Turso para los datos, variables de entorno para unir las dos.</p>
@@ -3189,7 +3605,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 13 IA ================= -->
         <section class="section" id="ia">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">13</span>
+            <span class="sec-no" aria-hidden="true">14</span>
             <div>
               <h2>Uso de IA</h2>
               <p class="sec-dek">Qué decir, qué no decir y cómo guardar la prueba de que la revisaste.</p>
@@ -3253,7 +3669,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 14 FUENTES ================= -->
         <section class="section" id="fuentes">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">14</span>
+            <span class="sec-no" aria-hidden="true">15</span>
             <div>
               <h2>Fuentes</h2>
               <p class="sec-dek">Qué dice cada fuente y qué sostiene. El enunciado manda; el resto es implementación.</p>
@@ -3374,7 +3790,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
         <!-- ================= 15 BITÁCORA ================= -->
         <section class="section" id="bitacora">
           <div class="sec-head">
-            <span class="sec-no" aria-hidden="true">15</span>
+            <span class="sec-no" aria-hidden="true">16</span>
             <div>
               <h2>Bitácora</h2>
               <p class="sec-dek">Qué se verificó, qué se decidió y qué queda abierto.</p>
@@ -3392,7 +3808,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             </div>
             <div class="log-entry">
               <span class="log-when">21/11/2026</span>
-              <div class="log-what"><b>Decisiones de arquitectura</b><span>libSQL para local y Turso con el mismo driver; contadores para la numeración; saldo derivado; importes en centavos; servicios como único lugar de reglas. Estas decisiones se justifican en las secciones 03, 04 y 06.</span></div>
+              <div class="log-what"><b>Decisiones de arquitectura</b><span>libSQL para local y Turso con el mismo driver; contadores para la numeración; saldo derivado; importes en centavos; servicios como único lugar de reglas. Estas decisiones se justifican en las secciones 04, 05 y 06.</span></div>
             </div>
             <div class="log-entry">
               <span class="log-when">21/11/2026</span>
