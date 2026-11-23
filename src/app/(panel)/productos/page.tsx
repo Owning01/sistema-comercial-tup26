@@ -56,12 +56,26 @@ export default async function Productos({
             La existencia cambia solo con movimientos. Editar un producto no toca el stock.
           </p>
         </div>
-        <Link
-          href="/productos/nuevo"
-          className="rounded-md bg-stone-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-800"
-        >
-          Nuevo producto
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/productos/movimientos"
+            className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
+          >
+            Ver movimientos
+          </Link>
+          <Link
+            href="/productos/movimientos/nuevo"
+            className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
+          >
+            Registrar movimiento
+          </Link>
+          <Link
+            href="/productos/nuevo"
+            className="rounded-md bg-stone-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-800"
+          >
+            Nuevo producto
+          </Link>
+        </div>
       </div>
 
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">

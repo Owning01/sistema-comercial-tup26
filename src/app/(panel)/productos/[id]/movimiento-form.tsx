@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useRestaurarFormulario } from '@/lib/formulario'
 import { registrarMovimiento, type EstadoMovimiento } from '@/server/actions/productos'
 
 const inicial: EstadoMovimiento = {}
@@ -18,14 +19,14 @@ export function FormularioMovimiento({
   existencia: number
 }) {
   const [estado, enviar, pendiente] = useActionState(registrarMovimiento, inicial)
-  const formulario = useRef<HTMLFormElement>(null)
+  const restaurador = useRestaurarFormulario(estado)
 
   useEffect(() => {
-    if (estado.ok) formulario.current?.reset()
-  }, [estado])
+    if (estado.ok) restaurador.ref.current?.reset()
+  }, [estado, restaurador.ref])
 
   return (
-    <form ref={formulario} action={enviar} className="space-y-4">
+    <form ref={restaurador.ref} onSubmit={restaurador.onSubmit} action={enviar} className="space-y-4">
       <input type="hidden" name="productoId" value={productoId} />
 
       <div className="grid gap-4 sm:grid-cols-2">

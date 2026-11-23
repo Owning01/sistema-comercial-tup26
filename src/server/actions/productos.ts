@@ -104,3 +104,15 @@ export async function registrarMovimiento(
     return { error: comoError(error) }
   }
 }
+
+/** Igual que registrarMovimiento, pero vuelve al historial global. */
+export async function registrarMovimientoGlobal(
+  previo: EstadoMovimiento,
+  formData: FormData,
+): Promise<EstadoMovimiento> {
+  const resultado = await registrarMovimiento(previo, formData)
+  if (resultado.error) return resultado
+
+  revalidatePath('/productos/movimientos')
+  redirect('/productos/movimientos')
+}

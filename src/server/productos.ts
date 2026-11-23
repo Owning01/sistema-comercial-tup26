@@ -101,7 +101,7 @@ export async function crearProducto(sesion: Sesion, datos: ProductoForm) {
         precio: datos.precio,
         existencia: datos.stockInicial,
         stockMinimo: datos.stockMinimo,
-        activo: true,
+        activo: datos.activo,
       })
       .returning()
 
@@ -212,4 +212,38 @@ export async function listarMovimientos(productoId: number) {
     .where(eq(movimientosStock.productoId, productoId))
     .orderBy(desc(movimientosStock.fecha), desc(movimientosStock.id))
     .limit(50)
+}
+
+/** Todos los movimientos, con el producto y la venta asociada. */
+export async function listarMovimientosGlobal(filtro: { q?: string; tipo?: string } = {}) {
+  const q = filtro.q?.trim()
+  const patron = q ? `%${q}%` : null
+  const tipos = ['ingreso', 'egreso', 'ajuste', 'venta', 'anulacion']
+  const tipo = filtro.tipo && tipos.includes(filtro.tipo) ? filtro.tipo : null
+
+  const condiciones = []
+  if (patron) {
+    condiciones.push(or(like(productos.codigo, patron), like(productos.descripcion, patron)))
+  }
+  if (tipo) condiciones.push(eq(movimientosStock.tipo, tipo))
+
+  return db
+    .select({
+      id: movimientosStock.id,
+      tipo: movimientosStock.tipo,
+      cantidad: movimientosStock.cantidad,
+      existenciaResultante: movimientosStock.existenciaResultante,
+      motivo: movimientosStock.motivo,
+      observacion: movimientosStock.observacion,
+      fecha: movimientosStock.fecha,
+      facturaId: movimientosStock.facturaId,
+      productoId: productos.id,
+      codigo: productos.codigo,
+      descripcion: productos.descripcion,
+    })
+    .from(movimientosStock)
+    .innerJoin(productos, eq(movimientosStock.productoId, productos.id))
+    .where(condiciones.length ? and(...condiciones) : undefined)
+    .orderBy(desc(movimientosStock.fecha), desc(movimientosStock.id))
+    .limit(200)
 }

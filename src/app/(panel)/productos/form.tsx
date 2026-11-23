@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { aPesosEditables } from '@/lib/dinero'
+import { useRestaurarFormulario } from '@/lib/formulario'
 import type { EstadoProducto } from '@/server/actions/productos'
 
 type Categoria = { id: number; nombre: string }
@@ -31,10 +32,11 @@ const etiqueta = 'block text-sm font-medium text-stone-700'
 
 export function FormularioProducto({ accion, categorias, producto }: Props) {
   const [estado, enviar, pendiente] = useActionState(accion, inicial)
+  const restaurador = useRestaurarFormulario(estado)
   const editando = Boolean(producto)
 
   return (
-    <form action={enviar} className="max-w-xl space-y-5">
+    <form ref={restaurador.ref} onSubmit={restaurador.onSubmit} action={enviar} className="max-w-xl space-y-5">
       {producto ? <input type="hidden" name="id" value={producto.id} /> : null}
 
       <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
@@ -130,19 +132,7 @@ export function FormularioProducto({ accion, categorias, producto }: Props) {
           <p className="mt-1 text-xs text-stone-500">Avisa cuando la existencia llegue a este número.</p>
         </div>
 
-        {editando ? (
-          <div className="flex items-end pb-1">
-            <label className="flex items-center gap-2 text-sm text-stone-700">
-              <input
-                type="checkbox"
-                name="activo"
-                defaultChecked={producto?.activo}
-                className="size-4 rounded border-stone-300 accent-stone-900"
-              />
-              Producto activo (se puede vender)
-            </label>
-          </div>
-        ) : (
+        {editando ? null : (
           <div>
             <label htmlFor="stockInicial" className={etiqueta}>
               Stock inicial
@@ -159,6 +149,16 @@ export function FormularioProducto({ accion, categorias, producto }: Props) {
           </div>
         )}
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-stone-700">
+        <input
+          type="checkbox"
+          name="activo"
+          defaultChecked={producto ? producto.activo : true}
+          className="size-4 rounded border-stone-300 accent-stone-900"
+        />
+        Producto activo (se puede vender)
+      </label>
 
       {estado.error ? (
         <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
