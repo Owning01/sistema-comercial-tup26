@@ -3847,8 +3847,8 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </div>
 
           <div class="prose">
-            <p><strong>Paso 2 de 9 · autenticación.</strong> Última actualización: 23/11/2026.</p>
-            <p>La aplicación pide sesión para entrar, verifica la contraseña contra un hash y protege el panel. Todavía no hay módulos de negocio: no existe el alta de productos, ni la venta, ni los pagos.</p>
+            <p><strong>Paso 3 de 9 · productos y stock.</strong> Última actualización: 23/11/2026.</p>
+            <p>El sistema ya pide sesión, administra el catálogo y mueve existencias. Cada cambio de stock deja un registro con usuario, fecha y motivo. Todavía no existen clientes, ventas ni cobros.</p>
           </div>
 
           <div class="tablewrap">
@@ -3877,12 +3877,12 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 </tr>
                 <tr>
                   <td class="model">Productos y stock</td>
-                  <td><span class="pill warn">Siguiente</span></td>
-                  <td>Alta, edición, búsqueda, entradas y salidas manuales, y el listado de movimientos.</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>Listado con búsqueda, alta, edición, activación, entradas y salidas manuales con control de stock, e historial por producto.</td>
                 </tr>
                 <tr>
                   <td class="model">Clientes y cuenta corriente</td>
-                  <td><span class="pill">Pendiente</span></td>
+                  <td><span class="pill warn">Siguiente</span></td>
                   <td>Alta, búsqueda, saldo derivado y registro de pagos.</td>
                 </tr>
                 <tr>
@@ -3905,28 +3905,55 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </div>
 
           <div class="prose">
+            <h3>Qué se puede hacer con productos</h3>
+            <ul>
+              <li><strong>Listar y buscar.</strong> La tabla muestra código, descripción, categoría, precio, existencia contra el mínimo y estado. Con siete productos o más, la búsqueda filtra por código o descripción.</li>
+              <li><strong>Dar de alta.</strong> Código único, descripción, categoría opcional, precio, stock mínimo y stock inicial. El stock inicial entra como un movimiento de tipo <code>ingreso</code>, no como un número suelto.</li>
+              <li><strong>Editar.</strong> Se cambian código, descripción, categoría, precio, mínimo y el estado activo. La existencia no se edita: se mueve con entradas y salidas.</li>
+              <li><strong>Mover stock.</strong> Entrada o salida con cantidad, motivo y observación. La salida se rechaza si no alcanza, y el mensaje dice cuántas unidades quedan.</li>
+              <li><strong>Auditar.</strong> El historial guarda fecha, tipo, cantidad, existencia resultante, motivo y observación. Cada fila queda asociada al usuario que la registró.</li>
+            </ul>
+          </div>
+
+          <div class="prose">
+            <h3>Las tres reglas que sostienen el módulo</h3>
+            <p><strong>La existencia solo cambia por un movimiento.</strong> El <code>UPDATE</code> del stock y el <code>INSERT</code> del movimiento viven en la misma transacción. Si una parte falla, no queda ni el cambio ni el registro.</p>
+            <p><strong>La condición de stock vive en la base.</strong> Una salida se ejecuta con <code>existencia &gt;= cantidad</code> dentro del <code>WHERE</code>. Si no alcanza, el <code>UPDATE</code> no toca ninguna fila y el servicio responde 422. No hay una lectura previa que pueda quedar vieja entre dos ventas simultáneas.</p>
+            <p><strong>El dinero se guarda en centavos.</strong> El formulario acepta <code>1.234,50</code>, <code>1234,50</code> o <code>1234.50</code>; el servicio lo convierte una sola vez y la base guarda un entero. La interfaz formatea con <code>Intl.NumberFormat('es-AR')</code>. Nunca se suman números con decimales flotantes.</p>
+          </div>
+
+          <div class="prose">
             <h3>Los archivos que existen</h3>
-            <p>El árbol real, no el ideal. Catorce archivos de código, ochocientas siete líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
+            <p>El árbol real, no el ideal. Veintitrés archivos de código, 2.126 líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
           </div>
 
           <div class="tablewrap">
             <table>
               <thead><tr><th>Archivo</th><th>Líneas</th><th>Qué hace</th></tr></thead>
               <tbody>
-                <tr><td class="model">src/db/schema.ts</td><td>244</td><td>Las diez tablas, sus columnas, índices y relaciones. Es la fuente de los tipos.</td></tr>
-                <tr><td class="model">src/db/seed.ts</td><td>131</td><td>Borra y vuelve a cargar los datos de prueba. Se niega a correr contra una base remota salvo <code>--forzar</code>.</td></tr>
-                <tr><td class="model">src/server/auth.ts</td><td>73</td><td>Firma y verifica la sesión, lee la cookie y expone <code>requerirSesion</code> y <code>requerirAdmin</code>.</td></tr>
-                <tr><td class="model">src/app/(panel)/page.tsx</td><td>73</td><td>Inicio del panel: saludo, motor de base y conteo de filas.</td></tr>
-                <tr><td class="model">src/app/login/form.tsx</td><td>52</td><td>Formulario de login con estado de envío y mensaje de error.</td></tr>
-                <tr><td class="model">src/app/(panel)/nav.tsx</td><td>50</td><td>Navegación lateral. Marca la sección activa y muestra «pronto» en las que faltan.</td></tr>
-                <tr><td class="model">src/app/(panel)/layout.tsx</td><td>38</td><td>La barrera: sin sesión redirige al login. Dibuja la barra lateral y el pie con el usuario.</td></tr>
-                <tr><td class="model">src/server/actions/auth.ts</td><td>33</td><td>Server Actions de entrar y salir. Valida, autentica y redirige.</td></tr>
-                <tr><td class="model">src/server/usuarios.ts</td><td>26</td><td>Busca el usuario y compara la contraseña. Compara contra un hash falso si el email no existe.</td></tr>
-                <tr><td class="model">src/app/login/page.tsx</td><td>26</td><td>Pantalla de login. Si ya hay sesión, redirige al panel.</td></tr>
-                <tr><td class="model">src/db/client.ts</td><td>19</td><td>Una sola conexión por proceso, con la URL y el token de <code>.env</code>.</td></tr>
+                <tr><td class="model">src/db/schema.ts</td><td>264</td><td>Las diez tablas, sus columnas, índices y relaciones. Es la fuente de los tipos.</td></tr>
+                <tr><td class="model">src/server/productos.ts</td><td>215</td><td>Servicio: listar, obtener, crear, editar y mover stock. Concentra las reglas.</td></tr>
+                <tr><td class="model">src/app/(panel)/productos/page.tsx</td><td>214</td><td>Listado con búsqueda, totales, estado del stock y tarjetas en el celular.</td></tr>
+                <tr><td class="model">src/app/(panel)/productos/[id]/page.tsx</td><td>213</td><td>Detalle: datos, edición, formulario de stock e historial de movimientos.</td></tr>
+                <tr><td class="model">src/app/(panel)/productos/form.tsx</td><td>185</td><td>Formulario compartido de alta y edición, con estado de envío y errores.</td></tr>
+                <tr><td class="model">src/db/seed.ts</td><td>145</td><td>Borra y vuelve a cargar los datos de prueba. Se niega a correr contra una base remota salvo <code>--forzar</code>.</td></tr>
+                <tr><td class="model">src/app/(panel)/productos/[id]/movimiento-form.tsx</td><td>121</td><td>Entrada o salida de stock. Limpia el formulario cuando el movimiento sale bien.</td></tr>
+                <tr><td class="model">src/server/actions/productos.ts</td><td>106</td><td>Server Actions de productos y stock: validan, llaman al servicio y revalidan la ruta.</td></tr>
+                <tr><td class="model">src/lib/validation.ts</td><td>85</td><td>Esquemas de Zod: login, producto, edición y movimiento. El precio se convierte a centavos acá.</td></tr>
+                <tr><td class="model">src/server/auth.ts</td><td>85</td><td>Firma y verifica la sesión, lee la cookie y expone <code>requerirSesion</code> y <code>requerirAdmin</code>.</td></tr>
+                <tr><td class="model">src/app/(panel)/page.tsx</td><td>79</td><td>Inicio del panel: saludo, motor de base y conteo de filas.</td></tr>
+                <tr><td class="model">src/app/login/form.tsx</td><td>59</td><td>Formulario de login con estado de envío y mensaje de error.</td></tr>
+                <tr><td class="model">src/app/(panel)/layout.tsx</td><td>57</td><td>La barrera: sin sesión redirige al login. Barra lateral en escritorio y encabezado compacto en el celular.</td></tr>
+                <tr><td class="model">src/app/(panel)/nav.tsx</td><td>56</td><td>Navegación lateral. Marca la sección activa y muestra «pronto» en las que faltan.</td></tr>
+                <tr><td class="model">src/lib/dinero.ts</td><td>41</td><td>Formatea pesos, convierte texto a centavos y vuelve a texto editable.</td></tr>
+                <tr><td class="model">src/server/actions/auth.ts</td><td>41</td><td>Server Actions de entrar y salir. Valida, autentica y redirige.</td></tr>
+                <tr><td class="model">src/app/(panel)/productos/nuevo/page.tsx</td><td>32</td><td>Pantalla de alta. Carga las categorías y monta el formulario.</td></tr>
+                <tr><td class="model">src/server/usuarios.ts</td><td>31</td><td>Busca el usuario y compara la contraseña. Compara contra un hash falso si el email no existe.</td></tr>
+                <tr><td class="model">src/app/login/page.tsx</td><td>31</td><td>Pantalla de login. Si ya hay sesión, redirige al panel.</td></tr>
+                <tr><td class="model">src/db/client.ts</td><td>24</td><td>Una sola conexión por proceso, con la URL y el token de <code>.env</code>.</td></tr>
+                <tr><td class="model">src/app/layout.tsx</td><td>16</td><td>El HTML base, el idioma y la tipografía del sistema.</td></tr>
                 <tr><td class="model">src/lib/errors.ts</td><td>15</td><td><code>ApiError</code>: una sola forma de error para todos los servicios.</td></tr>
-                <tr><td class="model">src/app/layout.tsx</td><td>14</td><td>El HTML base, el idioma y la tipografía del sistema.</td></tr>
-                <tr><td class="model">src/lib/validation.ts</td><td>13</td><td>Esquemas de Zod compartidos. Por ahora, el del login.</td></tr>
+                <tr><td class="model">src/lib/fechas.ts</td><td>11</td><td>Formatea fechas en horario de Argentina, con un solo formato para todo el sistema.</td></tr>
               </tbody>
             </table>
           </div>
@@ -3943,13 +3970,16 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 <span class="t-fn">pnpm</span> db:seed               <span class="t-com"># carga los datos de prueba</span>
 <span class="t-fn">pnpm</span> dev                   <span class="t-com"># http://localhost:3000</span>
 
-<span class="t-com"># Entrar con admin@comercial.test / admin1234</span></code></pre>
+<span class="t-com"># Entrar con admin@comercial.test / admin1234</span>
+<span class="t-com"># Productos: /productos · Alta: /productos/nuevo</span></code></pre>
           </figure>
 
           <div class="prose">
             <h3>Qué se ve al entrar</h3>
-            <p>Sin sesión, cualquier ruta del panel redirige a <code>/login</code>. El formulario acepta las credenciales de prueba y deja una cookie <code>httpOnly</code> que JavaScript no puede leer; con ella abierta, la raíz muestra el panel, el saludo con el nombre y el conteo de tablas. «Cerrar sesión» borra la cookie y vuelve al login.</p>
-            <p>La contraseña incorrecta responde siempre «Email o contraseña incorrectos», sin distinguir si el email existe. Si el usuario está inactivo, tampoco entra.</p>
+            <p>Sin sesión, cualquier ruta del panel redirige a <code>/login</code>. El formulario acepta las credenciales de prueba y deja una cookie <code>httpOnly</code> que JavaScript no puede leer; con ella abierta, la raíz muestra el panel y la barra lateral habilita Productos.</p>
+            <p>El listado arranca con los seis productos del seed. «Nuevo producto» pide código, descripción, categoría, precio, mínimo y stock inicial. Al guardar, el producto aparece en la tabla y su stock inicial queda como primera entrada del historial.</p>
+            <p>En el detalle se edita el producto y se registran movimientos. Una salida mayor a la existencia devuelve «No hay stock suficiente. Quedan N unidades» y no toca la base. El historial muestra la existencia resultante de cada movimiento, así se puede reconstruir cómo llegó al número actual.</p>
+            <p>En el celular la tabla se convierte en tarjetas, el historial también, y la barra lateral pasa a un encabezado con el usuario y el botón Salir. Ninguna pantalla desborda a 390 px.</p>
           </div>
 
           <div class="note">

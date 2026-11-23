@@ -14,9 +14,9 @@ Sistema de facturación, control de stock y cuenta corriente para un comercio mi
 
 ## Estado
 
-Base montada y autenticación funcionando. La aplicación pide sesión, verifica la
-contraseña contra un hash y protege el panel con una cookie firmada. Falta la
-interfaz de los módulos de negocio: productos, clientes y ventas.
+Productos y stock funcionando. La aplicación pide sesión, administra el catálogo
+y registra cada entrada o salida con usuario, fecha y motivo. Falta la cuenta
+corriente de clientes y el flujo de venta.
 
 La guía de estudio y defensa está en [`docs/guia-defensa.html`](docs/guia-defensa.html).
 
@@ -52,10 +52,23 @@ Si de verdad hay que sembrar Turso, se pide con `pnpm db:seed --forzar`.
 | --- | --- |
 | `/login` | público |
 | `/` | solo con sesión; si no hay, redirige a `/login` |
+| `/productos` | listado, búsqueda y alta |
+| `/productos/[id]` | detalle, edición, movimientos e historial |
 
 La sesión es un JWT HS256 firmado con `AUTH_SECRET` y guardado en una cookie
 `httpOnly` de ocho horas. El rol viaja en el token y el servicio lo vuelve a
 verificar contra la base.
+
+## Productos y stock
+
+La existencia no se edita: cambia solo por un movimiento. Cada movimiento
+actualiza `productos.existencia` e inserta la fila en `movimientos_stock` dentro
+de la misma transacción. Una salida mayor a la existencia se rechaza con un
+mensaje que indica cuántas unidades quedan.
+
+El stock inicial de un alta se registra como una entrada de tipo `ingreso`. El
+precio se escribe en pesos, se convierte a centavos una sola vez y se guarda como
+entero. El código de producto es único y se guarda en mayúsculas.
 
 ## Usuarios de prueba
 
