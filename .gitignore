@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # Vercel
 .vercel
+
+# Herramientas locales (no se versionan)
+/tools/
