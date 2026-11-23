@@ -14,9 +14,9 @@ Sistema de facturación, control de stock y cuenta corriente para un comercio mi
 
 ## Estado
 
-Base montada y verificada. La aplicación arranca, migra la base y muestra una
-consulta real en la portada. Falta la interfaz de los módulos, la autenticación
-y el flujo de venta.
+Base montada y autenticación funcionando. La aplicación pide sesión, verifica la
+contraseña contra un hash y protege el panel con una cookie firmada. Falta la
+interfaz de los módulos de negocio: productos, clientes y ventas.
 
 La guía de estudio y defensa está en [`docs/guia-defensa.html`](docs/guia-defensa.html).
 
@@ -40,14 +40,29 @@ pnpm dev                   # http://localhost:3000
 ```
 
 Para producción, cambiar `DATABASE_URL` por la URL de Turso y completar
-`DATABASE_AUTH_TOKEN`. La misma migración corre contra Turso.
+`DATABASE_AUTH_TOKEN`. La misma migración corre contra Turso. Las credenciales
+de Turso de este equipo quedan en `.env.turso.local`, que no se versiona.
+
+`pnpm db:seed` borra todas las filas y se niega a correr contra una base remota.
+Si de verdad hay que sembrar Turso, se pide con `pnpm db:seed --forzar`.
+
+## Acceso
+
+| Ruta | Quién entra |
+| --- | --- |
+| `/login` | público |
+| `/` | solo con sesión; si no hay, redirige a `/login` |
+
+La sesión es un JWT HS256 firmado con `AUTH_SECRET` y guardado en una cookie
+`httpOnly` de ocho horas. El rol viaja en el token y el servicio lo vuelve a
+verificar contra la base.
 
 ## Usuarios de prueba
 
-| Rol | Email | Contraseña |
-| --- | --- | --- |
-| Administrador | `admin@comercial.test` | `admin1234` |
-| Vendedor | `vendedor@comercial.test` | `vendedor1234` |
+| Rol | Nombre | Email | Contraseña |
+| --- | --- | --- | --- |
+| Administrador | Ana Pérez | `admin@comercial.test` | `admin1234` |
+| Vendedor | Bruno Díaz | `vendedor@comercial.test` | `vendedor1234` |
 
 ## Modelo de datos
 
