@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { db } from '@/db/client'
 import { categorias, clientes, facturas, productos, usuarios } from '@/db/schema'
+import { requerirSesion } from '@/server/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,35 +21,34 @@ async function resumen() {
 }
 
 export default async function Inicio() {
+  const sesion = await requerirSesion()
   const filas = await resumen()
   const url = process.env.DATABASE_URL ?? 'file:./local.db'
   const remota = url.startsWith('libsql://')
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-16">
+    <div className="max-w-3xl">
       <p className="font-mono text-xs tracking-[0.14em] text-stone-500 uppercase">
-        Programación IV · Segundo parcial
+        Panel · {remota ? 'Turso' : 'SQLite local'}
       </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-        Sistema de Gestión Comercial
-      </h1>
-      <p className="mt-3 max-w-prose text-stone-600">
-        La base está montada: Next.js con App Router, Drizzle sobre libSQL y el esquema
-        migrado. Esta pantalla lee una consulta real a la base en cada pedido.
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight">Hola, {sesion.nombre}</h1>
+      <p className="mt-2 text-stone-600">
+        La sesión está abierta y la base responde. Todavía no hay módulos de negocio: el próximo
+        paso es productos y stock.
       </p>
 
-      <section className="mt-10">
-        <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">
-          Conexión
-        </h2>
+      <section className="mt-8">
+        <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Conexión</h2>
         <dl className="mt-3 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-2">
           <div className="bg-white px-4 py-3">
             <dt className="text-xs text-stone-500">Motor</dt>
-            <dd className="mt-1 font-mono text-sm">{remota ? 'Turso (libSQL remoto)' : 'SQLite local'}</dd>
+            <dd className="mt-1 font-mono text-sm">
+              {remota ? 'Turso (libSQL remoto)' : 'SQLite local'}
+            </dd>
           </div>
           <div className="bg-white px-4 py-3">
             <dt className="text-xs text-stone-500">URL</dt>
-            <dd className="mt-1 truncate font-mono text-sm" title={url}>
+            <dd className="truncate font-mono text-sm" title={url}>
               {url}
             </dd>
           </div>
@@ -56,9 +56,7 @@ export default async function Inicio() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">
-          Tablas
-        </h2>
+        <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Tablas</h2>
         <table className="mt-3 w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-stone-200 text-left text-xs text-stone-500">
@@ -76,10 +74,6 @@ export default async function Inicio() {
           </tbody>
         </table>
       </section>
-
-      <p className="mt-10 text-sm text-stone-500">
-        Siguiente paso: autenticación con sesión firmada y el módulo de productos.
-      </p>
-    </main>
+    </div>
   )
 }
