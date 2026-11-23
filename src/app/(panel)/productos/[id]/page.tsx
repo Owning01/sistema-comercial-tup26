@@ -4,6 +4,7 @@ import { formatearPesos } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { ApiError } from '@/lib/errors'
 import { actualizarProducto } from '@/server/actions/productos'
+import { leerSesion } from '@/server/auth'
 import { listarCategorias, listarMovimientos, obtenerProducto } from '@/server/productos'
 import { FormularioProducto } from '../form'
 import { FormularioMovimiento } from './movimiento-form'
@@ -48,11 +49,13 @@ export default async function DetalleProducto({ params }: { params: Promise<{ id
     throw error
   }
 
-  const [categorias, { data: movimientos }] = await Promise.all([
+  const [categorias, { data: movimientos }, sesion] = await Promise.all([
     listarCategorias(),
     listarMovimientos(id, { page: 1, pageSize: 50 }),
+    leerSesion(),
   ])
   const bajoMinimo = producto.existencia <= producto.stockMinimo
+  const esAdmin = sesion?.rol === 'admin'
 
   return (
     <div className="max-w-5xl">
@@ -106,26 +109,32 @@ export default async function DetalleProducto({ params }: { params: Promise<{ id
         </div>
       </dl>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-2">
-        <section>
-          <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Editar producto</h2>
-          <div className="mt-4">
-            <FormularioProducto
-              accion={actualizarProducto}
-              categorias={categorias}
-              producto={producto}
-            />
-          </div>
-        </section>
+      {esAdmin ? (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          <section>
+            <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Editar producto</h2>
+            <div className="mt-4">
+              <FormularioProducto
+                accion={actualizarProducto}
+                categorias={categorias}
+                producto={producto}
+              />
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Mover stock</h2>
-          <p className="mt-1 mb-4 text-sm text-stone-600">
-            Cada movimiento guarda quién lo hizo, cuándo y cómo quedó la existencia.
-          </p>
-          <FormularioMovimiento productoId={producto.id} existencia={producto.existencia} />
-        </section>
-      </div>
+          <section>
+            <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">Mover stock</h2>
+            <p className="mt-1 mb-4 text-sm text-stone-600">
+              Cada movimiento guarda quién lo hizo, cuándo y cómo quedó la existencia.
+            </p>
+            <FormularioMovimiento productoId={producto.id} existencia={producto.existencia} />
+          </section>
+        </div>
+      ) : (
+        <p className="mt-10 rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
+          El catálogo y el stock los administra un usuario con rol administrador.
+        </p>
+      )}
 
       <section className="mt-12">
         <h2 className="text-sm font-medium tracking-wide text-stone-500 uppercase">

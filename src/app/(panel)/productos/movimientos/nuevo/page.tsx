@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { requerirAdmin } from '@/server/auth'
 import { listarProductos } from '@/server/productos'
 import { FormularioMovimientoGlobal } from './form'
 
@@ -9,6 +10,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function NuevoMovimiento() {
+  await requerirAdmin()
   const { data: productos } = await listarProductos({ activo: 'todos', pageSize: 100 })
 
   return (

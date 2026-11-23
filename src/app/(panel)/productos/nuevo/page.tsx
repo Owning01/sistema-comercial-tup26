@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { guardarProducto } from '@/server/actions/productos'
+import { requerirAdmin } from '@/server/auth'
 import { listarCategorias } from '@/server/productos'
 import { FormularioProducto } from '../form'
 
@@ -8,6 +9,7 @@ export const metadata = {
 }
 
 export default async function NuevoProducto() {
+  await requerirAdmin()
   const categorias = await listarCategorias()
 
   return (
