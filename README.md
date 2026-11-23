@@ -183,10 +183,10 @@ ninguna regla vive en el adaptador.
 Los importes viajan en centavos y los esquemas Zod son estrictos: un campo
 desconocido devuelve `422 VALIDACION`. Los errores usan el formato
 `{ error: { code, message, details } }` con los códigos del enunciado:
-`STOCK_INSUFICIENTE` (409), `CUENTA_CORRIENTE_NO_HABILITADA` (409),
-`LIMITE_CREDITO_EXCEDIDO` (409), `PAGO_SUPERA_DEUDA` (409),
+`STOCK_INSUFICIENTE` (409), `CUENTA_CORRIENTE_NO_HABILITADA` (422),
+`LIMITE_CREDITO_EXCEDIDO` (422), `PAGO_SUPERA_DEUDA` (422),
 `MONTO_INSUFICIENTE` (422), `FACTURA_ANULADA` (409), `OPERACION_SOBRE_SI_MISMO`
-(409), `SIN_PERMISO` (403) y `NO_ENCONTRADO` (404).
+(422), `SIN_PERMISO` (403) y `NO_ENCONTRADO` (404).
 
 ## Reglas de negocio
 
