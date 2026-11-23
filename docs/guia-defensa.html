@@ -3748,7 +3748,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
           <div class="prose">
             <h3>Qué se puede hacer</h3>
-            <p><strong>Vender.</strong> El POS busca productos por código o descripción, arma el carrito con cantidades y subtotales, y muestra el total. El pago puede ser de contado con vuelto calculado, con tarjeta simulada o en cuenta corriente. Si el cliente no existe, se da de alta desde el mismo panel sin perder el carrito. Al confirmar se emite un comprobante con numeración única y se copian precios y descripciones del momento de la venta.</p>
+            <p><strong>Vender.</strong> El POS busca productos por código o descripción, arma el carrito con cantidades y subtotales, y muestra el total. El pago puede ser de contado con vuelto calculado, con tarjeta simulada o en cuenta corriente. Si el cliente no existe, se da de alta desde el mismo panel sin perder el carrito. Al confirmar se emite un comprobante con numeración única, datos del comercio, botón de impresión y copia de precios y descripciones del momento de la venta.</p>
             <p><strong>Mover stock.</strong> Cada producto tiene entradas, salidas y un historial con fecha, usuario, motivo, cantidad y existencia resultante. Una salida se rechaza si no alcanza y el mensaje dice cuántas unidades quedan. El historial global filtra por producto y por tipo de movimiento.</p>
             <p><strong>Cobrar.</strong> La cuenta corriente muestra cada débito y cada crédito. Un pago se rechaza si supera la deuda, y una venta en cuenta corriente se rechaza si supera el límite de crédito del cliente. El saldo no se guarda: se calcula sumando los movimientos.</p>
             <p><strong>Anular.</strong> El administrador abre un comprobante, escribe el motivo y confirma. La factura pasa a <em>Anulada</em>, el stock vuelve y, si fue en cuenta corriente, la deuda se acredita. El comprobante y el número quedan. Una segunda anulación se rechaza con <code>409 FACTURA_ANULADA</code>.</p>
@@ -3767,17 +3767,17 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
           <div class="prose">
             <h3>Los archivos que existen</h3>
-            <p>El árbol real, ordenado como en el explorador: primero las carpetas, después los archivos, y en cada nivel por orden alfabético. 91 archivos de código, 9.773 líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
+            <p>El árbol real, ordenado como en el explorador: primero las carpetas, después los archivos, y en cada nivel por orden alfabético. 94 archivos de código, 10.223 líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
           </div>
 
           <div class="explorer">
-            <div class="explorer-bar"><b>src/</b><span>91 archivos · 9.773 líneas</span></div>
+            <div class="explorer-bar"><b>src/</b><span>94 archivos · 10.223 líneas</span></div>
             <ul class="tree">
               <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">app/</span><span class="count">58</span><span class="desc">rutas y pantallas (App Router)</span></div>
+                <div class="row"><span class="tw">▾</span><span class="name">app/</span><span class="count">59</span><span class="desc">rutas y pantallas (App Router)</span></div>
                 <ul>
                   <li class="dir">
-                    <div class="row"><span class="tw">▾</span><span class="name">(panel)/</span><span class="count">31</span><span class="desc">área con sesión</span></div>
+                    <div class="row"><span class="tw">▾</span><span class="name">(panel)/</span><span class="count">32</span><span class="desc">área con sesión</span></div>
                     <ul>
                       <li class="dir">
                         <div class="row"><span class="tw">▾</span><span class="name">clientes/</span><span class="count">5</span><span class="desc">clientes y cuenta corriente</span></div>
@@ -3796,7 +3796,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                             </ul>
                           </li>
                           <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">203</span><span class="desc">alta y edición de cliente</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">204</span><span class="desc">listado de clientes y saldos</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">261</span><span class="desc">listado de clientes y saldos</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
@@ -3833,7 +3833,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                                   <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">34</span><span class="desc">registro manual de stock</span></div></li>
                                 </ul>
                               </li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">251</span><span class="desc">historial global de stock</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">255</span><span class="desc">historial global de stock</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
@@ -3843,7 +3843,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                             </ul>
                           </li>
                           <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">186</span><span class="desc">alta y edición de producto</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">241</span><span class="desc">catálogo, precios y stock</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">316</span><span class="desc">catálogo, filtros y paginación</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
@@ -3862,17 +3862,18 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                             </ul>
                           </li>
                           <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">146</span><span class="desc">alta y edición de usuario</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">130</span><span class="desc">listado de usuarios</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">171</span><span class="desc">listado de usuarios</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
-                        <div class="row"><span class="tw">▾</span><span class="name">ventas/</span><span class="count">6</span><span class="desc">carpeta del proyecto</span></div>
+                        <div class="row"><span class="tw">▾</span><span class="name">ventas/</span><span class="count">7</span><span class="desc">carpeta del proyecto</span></div>
                         <ul>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">3</span><span class="desc">recurso por id</span></div>
                             <ul>
                               <li class="entrada"><div class="row"><span class="tw"></span><span class="name">anulacion-form.tsx</span><span class="lines">61</span><span class="desc">confirmación de anulación</span></div></li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">202</span><span class="desc">comprobante y anulación</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">boton-imprimir.tsx</span><span class="lines">14</span><span class="desc">botón de impresión del comprobante</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">217</span><span class="desc">comprobante, impresión y anulación</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
@@ -3883,7 +3884,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                               <li class="entrada"><div class="row"><span class="tw"></span><span class="name">pos.tsx</span><span class="lines">574</span><span class="desc">POS: carrito, pago y API</span></div></li>
                             </ul>
                           </li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">204</span><span class="desc">listado de comprobantes</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">370</span><span class="desc">listado con filtros y paginación</span></div></li>
                         </ul>
                       </li>
                       <li class="entrada"><div class="row"><span class="tw"></span><span class="name">graficos.tsx</span><span class="lines">227</span><span class="desc">gráficos Chart.js del tablero</span></div></li>
@@ -4057,7 +4058,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 </ul>
               </li>
               <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">components/</span><span class="count">8</span><span class="desc">componentes de interfaz</span></div>
+                <div class="row"><span class="tw">▾</span><span class="name">components/</span><span class="count">9</span><span class="desc">componentes de interfaz</span></div>
                 <ul>
                   <li class="dir">
                     <div class="row"><span class="tw">▾</span><span class="name">ui/</span><span class="count">8</span><span class="desc">componentes shadcn/ui</span></div>
@@ -4072,6 +4073,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                       <li class="entrada"><div class="row"><span class="tw"></span><span class="name">textarea.tsx</span><span class="lines">18</span><span class="desc">shadcn/ui: textarea</span></div></li>
                     </ul>
                   </li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">paginador.tsx</span><span class="lines">69</span><span class="desc">paginación que conserva filtros</span></div></li>
                 </ul>
               </li>
               <li class="dir">
@@ -4083,9 +4085,10 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 </ul>
               </li>
               <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">lib/</span><span class="count">8</span><span class="desc">utilidades y validación</span></div>
+                <div class="row"><span class="tw">▾</span><span class="name">lib/</span><span class="count">9</span><span class="desc">utilidades y validación</span></div>
                 <ul>
                   <li class="entrada"><div class="row"><span class="tw"></span><span class="name">api-schemas.ts</span><span class="lines">194</span><span class="desc">esquemas Zod de la API</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">comercio.ts</span><span class="lines">9</span><span class="desc">datos del comercio para el comprobante</span></div></li>
                   <li class="entrada"><div class="row"><span class="tw"></span><span class="name">dinero.ts</span><span class="lines">42</span><span class="desc">pesos, centavos y formato</span></div></li>
                   <li class="entrada"><div class="row"><span class="tw"></span><span class="name">errors.ts</span><span class="lines">16</span><span class="desc">ApiError de los servicios</span></div></li>
                   <li class="entrada"><div class="row"><span class="tw"></span><span class="name">fechas.ts</span><span class="lines">12</span><span class="desc">fecha y hora de Argentina</span></div></li>

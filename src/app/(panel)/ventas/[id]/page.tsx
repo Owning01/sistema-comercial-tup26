@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { COMERCIO } from '@/lib/comercio'
 import { formatearNumero, formatearPesos } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { ApiError } from '@/lib/errors'
 import { leerSesion } from '@/server/auth'
 import { obtenerVenta } from '@/server/ventas'
+import { BotonImprimir } from './boton-imprimir'
 import { FormularioAnulacion } from './anulacion-form'
 
 export const dynamic = 'force-dynamic'
@@ -35,9 +37,22 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-3xl">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-stone-200 pb-4">
+        <div>
+          <p className="font-mono text-xs tracking-[0.14em] text-stone-500 uppercase">
+            {COMERCIO.nombre}
+          </p>
+          <p className="mt-1 text-sm text-stone-600">{COMERCIO.direccion}</p>
+          <p className="text-xs text-stone-500">
+            CUIT {COMERCIO.cuit} · {COMERCIO.telefono} · {COMERCIO.condicionIva}
+          </p>
+        </div>
+        <BotonImprimir />
+      </header>
+
       <Link
         href="/ventas"
-        className="font-mono text-xs tracking-[0.14em] text-stone-500 uppercase underline-offset-4 hover:text-stone-900 hover:underline"
+        className="font-mono text-xs tracking-[0.14em] text-stone-500 uppercase underline-offset-4 hover:text-stone-900 hover:underline print:hidden"
       >
         ← Ventas
       </Link>
@@ -162,7 +177,7 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
       ) : null}
 
       {factura.estado === 'emitida' && sesion?.rol === 'admin' ? (
-        <div className="mt-6 rounded-lg border border-stone-200 bg-white px-4 py-4">
+        <div className="mt-6 rounded-lg border border-stone-200 bg-white px-4 py-4 print:hidden">
           <h2 className="text-sm font-medium text-stone-700">Anular factura</h2>
           <p className="mt-1 text-xs text-stone-500">
             Reingresa el stock de cada renglón. Si la venta fue en cuenta corriente, acredita la
@@ -174,7 +189,7 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
         </div>
       ) : null}
 
-      <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-200 pt-5">
+      <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-200 pt-5 print:hidden">
         <Link
           href="/ventas/nueva"
           className="rounded-md bg-stone-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-stone-800"

@@ -110,6 +110,10 @@ Al confirmar, una sola transacción:
 Si algo falla, no queda ni el comprobante ni el número. El cliente nunca envía
 precios ni totales: solo `productoId` y `cantidad`.
 
+El comprobante muestra los datos del comercio, el número, la fecha y hora, el
+vendedor, el comprador, el detalle, el total y la forma de pago. Incluye un botón
+para imprimir y oculta la navegación al imprimir.
+
 ### Anulación de facturas
 
 Solo el administrador puede anular. La operación es un reverso completo dentro de

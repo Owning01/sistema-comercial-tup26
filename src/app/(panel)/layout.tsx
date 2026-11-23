@@ -8,7 +8,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col border-b border-stone-200 bg-white lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:border-r lg:border-b-0">
+      <aside className="flex flex-col border-b border-stone-200 bg-white lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:border-r lg:border-b-0 print:hidden">
         <div className="flex items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-3">
             <span className="grid size-8 place-items-center bg-stone-900 font-mono text-xs font-bold text-white">
