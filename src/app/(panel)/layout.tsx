@@ -33,7 +33,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </div>
         </div>
 
-        <NavLateral />
+        <NavLateral esAdmin={sesion.rol === 'admin'} />
 
         <div className="mt-auto hidden border-t border-stone-200 px-5 py-4 lg:block">
           <p className="truncate text-sm font-medium">{sesion.nombre}</p>
