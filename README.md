@@ -74,19 +74,19 @@ guardado en una cookie `httpOnly` de ocho horas.
 | Ruta | Qué hay |
 | --- | --- |
 | `/` | tablero: ventas de hoy y del mes, deuda, stock bajo, gráficos y últimas ventas |
-| `/ventas` | historial de comprobantes con búsqueda y resumen del día |
+| `/ventas` | historial de comprobantes con filtros por fecha, cliente, pago, vendedor y estado, paginado, y resumen del día |
 | `/ventas/nueva` | punto de venta con carrito, pago y alta rápida de cliente |
 | `/ventas/[id]` | comprobante con renglones, totales, forma de pago y anulación |
-| `/productos` | catálogo con búsqueda, precios, existencias y estado |
+| `/productos` | catálogo paginado con búsqueda, filtro por categoría y estado, precios y existencias |
 | `/productos/nuevo` | alta de producto con stock inicial |
 | `/productos/[id]` | detalle, edición, movimientos e historial |
 | `/productos/categorias` | alta y activación de categorías, solo administrador |
-| `/productos/movimientos` | historial global de stock con filtros |
+| `/productos/movimientos` | historial global de stock con filtros y paginación |
 | `/productos/movimientos/nuevo` | entrada o salida manual de stock |
-| `/clientes` | listado, búsqueda, saldo y estado de cuenta corriente |
+| `/clientes` | listado paginado, búsqueda, saldo y estado de cuenta corriente |
 | `/clientes/nuevo` | alta de cliente |
 | `/clientes/[id]` | datos, historial de cuenta y registro de pagos |
-| `/usuarios` | administración de cuentas, solo para el administrador |
+| `/usuarios` | administración paginada de cuentas, solo para el administrador |
 | `/usuarios/nuevo` | alta de usuario |
 | `/usuarios/[id]` | edición, rol y estado |
 | `/perfil` | cambio de contraseña del usuario conectado |

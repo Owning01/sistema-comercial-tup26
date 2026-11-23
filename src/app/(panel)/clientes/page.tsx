@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Paginador } from '@/components/paginador'
 import { formatearPesos } from '@/lib/dinero'
 import { listarClientes } from '@/server/clientes'
 
@@ -11,13 +12,18 @@ export const dynamic = 'force-dynamic'
 export default async function Clientes({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; page?: string }>
 }) {
-  const { q } = await searchParams
-  const { data: clientes } = await listarClientes({ q, pageSize: 100 })
+  const { q, page } = await searchParams
+  const pagina = Math.max(1, Number(page ?? 1) || 1)
+  const [listado, todos] = await Promise.all([
+    listarClientes({ q, page: pagina, pageSize: 20 }),
+    listarClientes({ pageSize: 100 }),
+  ])
+  const clientes = listado.data
 
-  const conCuenta = clientes.filter((cliente) => cliente.cuentaCorriente).length
-  const deuda = clientes.reduce((total, cliente) => total + cliente.saldo, 0)
+  const conCuenta = todos.data.filter((cliente) => cliente.cuentaCorriente).length
+  const deuda = todos.data.reduce((total, cliente) => total + cliente.saldo, 0)
 
   return (
     <div className="max-w-5xl">
@@ -41,7 +47,7 @@ export default async function Clientes({
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Clientes</dt>
-          <dd className="mt-1 text-lg font-medium tabular-nums">{clientes.length}</dd>
+          <dd className="mt-1 text-lg font-medium tabular-nums">{listado.total}</dd>
         </div>
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Con cuenta corriente</dt>
@@ -198,6 +204,8 @@ export default async function Clientes({
           </div>
         </>
       )}
+
+      <Paginador pagina={listado} basePath="/clientes" params={{ q }} />
     </div>
   )
 }

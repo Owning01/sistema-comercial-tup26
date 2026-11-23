@@ -1,13 +1,26 @@
 import Link from 'next/link'
+import { Paginador } from '@/components/paginador'
 import { formatearPesos } from '@/lib/dinero'
 import { leerSesion } from '@/server/auth'
-import { listarProductos } from '@/server/productos'
+import { listarCategorias, listarProductos } from '@/server/productos'
 
 export const metadata = {
   title: 'Productos · Sistema de Gestión Comercial',
 }
 
 export const dynamic = 'force-dynamic'
+
+type Busqueda = {
+  q?: string
+  categoriaId?: string
+  activo?: string
+  page?: string
+}
+
+function aNumero(valor?: string) {
+  const numero = Number(valor)
+  return Number.isInteger(numero) && numero > 0 ? numero : undefined
+}
 
 function EstadoStock({ existencia, minimo }: { existencia: number; minimo: number }) {
   if (existencia === 0) {
@@ -39,16 +52,29 @@ function EstadoStock({ existencia, minimo }: { existencia: number; minimo: numbe
 export default async function Productos({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<Busqueda>
 }) {
-  const { q } = await searchParams
-  const [{ data: productos }, sesion] = await Promise.all([
-    listarProductos({ q, activo: 'todos', pageSize: 100 }),
+  const { q, categoriaId, activo, page } = await searchParams
+  const pagina = Math.max(1, Number(page ?? 1) || 1)
+  const filtroActivo = activo === 'inactivos' ? false : activo === 'todos' ? 'todos' : true
+
+  const [listado, todos, categorias, sesion] = await Promise.all([
+    listarProductos({
+      q,
+      categoriaId: aNumero(categoriaId),
+      activo: filtroActivo,
+      page: pagina,
+      pageSize: 20,
+    }),
+    listarProductos({ activo: 'todos', pageSize: 100 }),
+    listarCategorias(),
     leerSesion(),
   ])
+  const productos = listado.data
 
-  const valor = productos.reduce((total, p) => total + p.precio * p.existencia, 0)
-  const bajoMinimo = productos.filter((p) => p.activo && p.existencia <= p.stockMinimo).length
+  const valor = todos.data.reduce((total, p) => total + p.precio * p.existencia, 0)
+  const bajoMinimo = todos.data.filter((p) => p.activo && p.existencia <= p.stockMinimo).length
+  const hayFiltros = Boolean(q || categoriaId || (activo && activo !== 'activos'))
 
   return (
     <div className="max-w-5xl">
@@ -93,7 +119,7 @@ export default async function Productos({
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Productos</dt>
-          <dd className="mt-1 text-lg font-medium tabular-nums">{productos.length}</dd>
+          <dd className="mt-1 text-lg font-medium tabular-nums">{listado.total}</dd>
         </div>
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Bajo mínimo</dt>
@@ -105,41 +131,84 @@ export default async function Productos({
         </div>
       </dl>
 
-      <form method="get" action="/productos" className="mt-6 flex gap-2">
-        <label htmlFor="q" className="sr-only">
-          Buscar producto
-        </label>
-        <input
-          id="q"
-          name="q"
-          defaultValue={q ?? ''}
-          placeholder="Buscar por código o descripción"
-          autoComplete="off"
-          className="w-full max-w-sm rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
-        />
-        <button
-          type="submit"
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
-        >
-          Buscar
-        </button>
-        {q ? (
-          <Link
-            href="/productos"
-            className="rounded-md px-3 py-2 text-sm text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline"
+      <form
+        method="get"
+        action="/productos"
+        className="mt-6 grid gap-3 rounded-lg border border-stone-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <div className="sm:col-span-2">
+          <label htmlFor="q" className="mb-1 block text-xs font-medium text-stone-600">
+            Buscar
+          </label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={q ?? ''}
+            placeholder="Código o descripción"
+            autoComplete="off"
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+          />
+        </div>
+        <div>
+          <label htmlFor="categoriaId" className="mb-1 block text-xs font-medium text-stone-600">
+            Categoría
+          </label>
+          <select
+            id="categoriaId"
+            name="categoriaId"
+            defaultValue={categoriaId ?? ''}
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
           >
-            Limpiar
-          </Link>
-        ) : null}
+            <option value="">Todas</option>
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="activo" className="mb-1 block text-xs font-medium text-stone-600">
+            Estado
+          </label>
+          <select
+            id="activo"
+            name="activo"
+            defaultValue={activo ?? 'activos'}
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+          >
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+            <option value="todos">Todos</option>
+          </select>
+        </div>
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
+          <button
+            type="submit"
+            className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800"
+          >
+            Filtrar
+          </button>
+          {hayFiltros ? (
+            <Link
+              href="/productos"
+              className="rounded-md px-3 py-2 text-sm text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline"
+            >
+              Limpiar filtros
+            </Link>
+          ) : null}
+        </div>
       </form>
 
       {productos.length === 0 ? (
         <div className="mt-8 rounded-lg border border-dashed border-stone-300 px-6 py-12 text-center">
-          <p className="font-medium">{q ? 'Ningún producto coincide' : 'Todavía no hay productos'}</p>
+          <p className="font-medium">
+            {hayFiltros ? 'Ningún producto coincide' : 'Todavía no hay productos'}
+          </p>
           <p className="mt-1 text-sm text-stone-600">
-            {q ? (
+            {hayFiltros ? (
               <>
-                No hay resultados para <span className="font-mono">{q}</span>.{' '}
+                No hay resultados para esos filtros.{' '}
                 <Link href="/productos" className="underline underline-offset-4">
                   Ver todos
                 </Link>
@@ -235,6 +304,12 @@ export default async function Productos({
           </div>
         </>
       )}
+
+      <Paginador
+        pagina={listado}
+        basePath="/productos"
+        params={{ q, categoriaId, activo }}
+      />
     </div>
   )
 }

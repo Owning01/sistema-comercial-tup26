@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Paginador } from '@/components/paginador'
 import { formatearFecha } from '@/lib/fechas'
 import { listarMovimientosGlobal } from '@/server/productos'
 
@@ -36,16 +37,18 @@ function TipoMovimiento({ tipo }: { tipo: string }) {
 export default async function Movimientos({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tipo?: string }>
+  searchParams: Promise<{ q?: string; tipo?: string; page?: string }>
 }) {
-  const { q, tipo } = await searchParams
-  const { data: movimientos, total } = await listarMovimientosGlobal(
-    { q, tipo },
-    { page: 1, pageSize: 200 },
-  )
+  const { q, tipo, page } = await searchParams
+  const pagina = Math.max(1, Number(page ?? 1) || 1)
+  const [listado, todos] = await Promise.all([
+    listarMovimientosGlobal({ q, tipo }, { page: pagina, pageSize: 20 }),
+    listarMovimientosGlobal({}, { page: 1, pageSize: 500 }),
+  ])
+  const movimientos = listado.data
 
-  const entradas = movimientos.filter((movimiento) => movimiento.cantidad > 0).length
-  const salidas = movimientos.length - entradas
+  const entradas = todos.data.filter((movimiento) => movimiento.cantidad > 0).length
+  const salidas = todos.data.length - entradas
 
   return (
     <div className="max-w-5xl">
@@ -77,7 +80,7 @@ export default async function Movimientos({
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Movimientos</dt>
-          <dd className="mt-1 text-lg font-medium tabular-nums">{total}</dd>
+          <dd className="mt-1 text-lg font-medium tabular-nums">{listado.total}</dd>
         </div>
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Entradas</dt>
@@ -241,10 +244,11 @@ export default async function Movimientos({
         </>
       )}
 
-      <p className="mt-6 text-xs text-stone-500">
-        Últimos 200 movimientos. Las ventas descuentan stock automáticamente; las entradas y salidas
-        manuales quedan identificadas por su motivo.
-      </p>
+      <Paginador
+        pagina={listado}
+        basePath="/productos/movimientos"
+        params={{ q, tipo }}
+      />
     </div>
   )
 }

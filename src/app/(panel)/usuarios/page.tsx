@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Paginador } from '@/components/paginador'
 import { requerirAdmin } from '@/server/auth'
 import { listarUsuarios } from '@/server/usuarios'
 
@@ -8,10 +9,20 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function Usuarios() {
+export default async function Usuarios({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>
+}) {
+  const { q, page } = await searchParams
+  const pagina = Math.max(1, Number(page ?? 1) || 1)
   const sesion = await requerirAdmin()
-  const { data: usuarios } = await listarUsuarios(sesion, { pageSize: 100 })
-  const activos = usuarios.filter((usuario) => usuario.activo).length
+  const [listado, todos] = await Promise.all([
+    listarUsuarios(sesion, { q, page: pagina, pageSize: 20 }),
+    listarUsuarios(sesion, { pageSize: 100 }),
+  ])
+  const usuarios = listado.data
+  const activos = todos.data.filter((usuario) => usuario.activo).length
 
   return (
     <div className="max-w-4xl">
@@ -35,7 +46,7 @@ export default async function Usuarios() {
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Usuarios</dt>
-          <dd className="mt-1 text-lg font-medium tabular-nums">{usuarios.length}</dd>
+          <dd className="mt-1 text-lg font-medium tabular-nums">{listado.total}</dd>
         </div>
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Activos</dt>
@@ -44,10 +55,38 @@ export default async function Usuarios() {
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Administradores</dt>
           <dd className="mt-1 text-lg font-medium tabular-nums">
-            {usuarios.filter((usuario) => usuario.rol === 'admin' && usuario.activo).length}
+            {todos.data.filter((usuario) => usuario.rol === 'admin' && usuario.activo).length}
           </dd>
         </div>
       </dl>
+
+      <form method="get" action="/usuarios" className="mt-6 flex gap-2">
+        <label htmlFor="q" className="sr-only">
+          Buscar usuario
+        </label>
+        <input
+          id="q"
+          name="q"
+          defaultValue={q ?? ''}
+          placeholder="Buscar por nombre o email"
+          autoComplete="off"
+          className="w-full max-w-sm rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+        />
+        <button
+          type="submit"
+          className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
+        >
+          Buscar
+        </button>
+        {q ? (
+          <Link
+            href="/usuarios"
+            className="rounded-md px-3 py-2 text-sm text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline"
+          >
+            Limpiar
+          </Link>
+        ) : null}
+      </form>
 
       <ul className="mt-6 space-y-2 sm:hidden">
         {usuarios.map((usuario) => (
@@ -124,6 +163,8 @@ export default async function Usuarios() {
           </tbody>
         </table>
       </div>
+
+      <Paginador pagina={listado} basePath="/usuarios" params={{ q }} />
     </div>
   )
 }
