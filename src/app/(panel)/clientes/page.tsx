@@ -12,18 +12,27 @@ export const dynamic = 'force-dynamic'
 export default async function Clientes({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string; page?: string; conDeuda?: string; orden?: string }>
 }) {
-  const { q, page } = await searchParams
+  const { q, page, conDeuda, orden } = await searchParams
   const pagina = Math.max(1, Number(page ?? 1) || 1)
+  const soloDeuda = conDeuda === '1'
+  const ordenLista = orden === 'saldo' ? 'saldo' : 'nombre'
   const [listado, todos] = await Promise.all([
-    listarClientes({ q, page: pagina, pageSize: 20 }),
+    listarClientes({
+      q,
+      conDeuda: soloDeuda,
+      orden: ordenLista,
+      page: pagina,
+      pageSize: 20,
+    }),
     listarClientes({ pageSize: 100 }),
   ])
   const clientes = listado.data
 
   const conCuenta = todos.data.filter((cliente) => cliente.cuentaCorriente).length
   const deuda = todos.data.reduce((total, cliente) => total + cliente.saldo, 0)
+  const hayFiltros = Boolean(q || soloDeuda || ordenLista === 'saldo')
 
   return (
     <div className="max-w-5xl">
@@ -59,25 +68,59 @@ export default async function Clientes({
         </div>
       </dl>
 
-      <form method="get" action="/clientes" className="mt-6 flex gap-2">
-        <label htmlFor="q" className="sr-only">
-          Buscar cliente
-        </label>
-        <input
-          id="q"
-          name="q"
-          defaultValue={q ?? ''}
-          placeholder="Buscar por nombre o documento"
-          autoComplete="off"
-          className="w-full max-w-sm rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
-        />
+      <form
+        method="get"
+        action="/clientes"
+        className="mt-6 flex flex-wrap items-end gap-2 rounded-lg border border-stone-200 bg-white p-4"
+      >
+        <div className="min-w-56 flex-1">
+          <label htmlFor="q" className="mb-1 block text-xs font-medium text-stone-600">
+            Buscar
+          </label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={q ?? ''}
+            placeholder="Nombre o documento"
+            autoComplete="off"
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+          />
+        </div>
+        <div>
+          <label htmlFor="conDeuda" className="mb-1 block text-xs font-medium text-stone-600">
+            Cuenta
+          </label>
+          <select
+            id="conDeuda"
+            name="conDeuda"
+            defaultValue={soloDeuda ? '1' : ''}
+            className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900"
+          >
+            <option value="">Todos</option>
+            <option value="1">Solo con deuda</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="orden" className="mb-1 block text-xs font-medium text-stone-600">
+            Orden
+          </label>
+          <select
+            id="orden"
+            name="orden"
+            defaultValue={ordenLista}
+            className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900"
+          >
+            <option value="nombre">Nombre</option>
+            <option value="saldo">Mayor saldo</option>
+          </select>
+        </div>
         <button
           type="submit"
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
+          className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800"
         >
-          Buscar
+          Filtrar
         </button>
-        {q ? (
+        {hayFiltros ? (
           <Link
             href="/clientes"
             className="rounded-md px-3 py-2 text-sm text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline"
@@ -89,11 +132,13 @@ export default async function Clientes({
 
       {clientes.length === 0 ? (
         <div className="mt-8 rounded-lg border border-dashed border-stone-300 px-6 py-12 text-center">
-          <p className="font-medium">{q ? 'Ningún cliente coincide' : 'Todavía no hay clientes'}</p>
+          <p className="font-medium">
+            {hayFiltros ? 'Ningún cliente coincide' : 'Todavía no hay clientes'}
+          </p>
           <p className="mt-1 text-sm text-stone-600">
-            {q ? (
+            {hayFiltros ? (
               <>
-                No hay resultados para <span className="font-mono">{q}</span>.{' '}
+                No hay resultados para esos filtros.{' '}
                 <Link href="/clientes" className="underline underline-offset-4">
                   Ver todos
                 </Link>
@@ -205,7 +250,11 @@ export default async function Clientes({
         </>
       )}
 
-      <Paginador pagina={listado} basePath="/clientes" params={{ q }} />
+      <Paginador
+        pagina={listado}
+        basePath="/clientes"
+        params={{ q, conDeuda: soloDeuda ? '1' : undefined, orden: ordenLista }}
+      />
     </div>
   )
 }

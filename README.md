@@ -83,7 +83,7 @@ guardado en una cookie `httpOnly` de ocho horas.
 | `/productos/categorias` | alta y activación de categorías, solo administrador |
 | `/productos/movimientos` | historial global de stock con filtros y paginación |
 | `/productos/movimientos/nuevo` | entrada o salida manual de stock |
-| `/clientes` | listado paginado, búsqueda, saldo y estado de cuenta corriente |
+| `/clientes` | listado paginado, búsqueda, filtro por deuda, orden por saldo y estado de cuenta corriente |
 | `/clientes/nuevo` | alta de cliente |
 | `/clientes/[id]` | datos, historial de cuenta y registro de pagos |
 | `/usuarios` | administración paginada de cuentas, solo para el administrador |
