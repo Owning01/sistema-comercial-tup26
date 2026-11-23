@@ -39,7 +39,10 @@ export default async function Movimientos({
   searchParams: Promise<{ q?: string; tipo?: string }>
 }) {
   const { q, tipo } = await searchParams
-  const movimientos = await listarMovimientosGlobal({ q, tipo })
+  const { data: movimientos, total } = await listarMovimientosGlobal(
+    { q, tipo },
+    { page: 1, pageSize: 200 },
+  )
 
   const entradas = movimientos.filter((movimiento) => movimiento.cantidad > 0).length
   const salidas = movimientos.length - entradas
@@ -74,7 +77,7 @@ export default async function Movimientos({
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200 sm:grid-cols-3">
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Movimientos</dt>
-          <dd className="mt-1 text-lg font-medium tabular-nums">{movimientos.length}</dd>
+          <dd className="mt-1 text-lg font-medium tabular-nums">{total}</dd>
         </div>
         <div className="bg-white px-4 py-3">
           <dt className="text-xs text-stone-500">Entradas</dt>
@@ -157,12 +160,12 @@ export default async function Movimientos({
                   </span>
                 </div>
                 <Link
-                  href={`/productos/${movimiento.productoId}`}
+                  href={`/productos/${movimiento.producto.id}`}
                   className="mt-2 block text-sm font-medium underline-offset-4 hover:underline"
                 >
-                  {movimiento.descripcion}
+                  {movimiento.producto.descripcion}
                 </Link>
-                <p className="font-mono text-xs text-stone-500">{movimiento.codigo}</p>
+                <p className="font-mono text-xs text-stone-500">{movimiento.producto.codigo}</p>
                 <p className="mt-1 text-sm text-stone-600">{movimiento.motivo ?? 'Sin motivo'}</p>
                 <p className="mt-2 flex justify-between gap-3 text-xs text-stone-500">
                   <span className="tabular-nums">{formatearFecha(movimiento.fecha)}</span>
@@ -192,12 +195,12 @@ export default async function Movimientos({
                     </td>
                     <td className="px-4 py-2.5">
                       <Link
-                        href={`/productos/${movimiento.productoId}`}
+                        href={`/productos/${movimiento.producto.id}`}
                         className="font-medium underline-offset-4 hover:underline"
                       >
-                        {movimiento.descripcion}
+                        {movimiento.producto.descripcion}
                       </Link>
-                      <span className="block font-mono text-xs text-stone-500">{movimiento.codigo}</span>
+                      <span className="block font-mono text-xs text-stone-500">{movimiento.producto.codigo}</span>
                     </td>
                     <td className="px-4 py-2.5">
                       <TipoMovimiento tipo={movimiento.tipo} />
@@ -216,9 +219,9 @@ export default async function Movimientos({
                       {movimiento.existenciaResultante}
                     </td>
                     <td className="px-4 py-2.5">
-                      {movimiento.facturaId ? (
+                      {movimiento.referencia ? (
                         <Link
-                          href={`/ventas/${movimiento.facturaId}`}
+                          href={`/ventas/${movimiento.referencia.facturaId}`}
                           className="underline-offset-4 hover:underline"
                         >
                           {movimiento.motivo ?? 'Venta'}

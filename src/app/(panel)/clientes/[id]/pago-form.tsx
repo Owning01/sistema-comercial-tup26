@@ -64,7 +64,7 @@ export function FormularioPago({ clienteId, saldo }: { clienteId: number; saldo:
           <select id="medio" name="medio" defaultValue="efectivo" className={campo}>
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
-            <option value="tarjeta">Tarjeta</option>
+            <option value="tarjeta_debito">Tarjeta de débito</option>
           </select>
         </div>
       </div>

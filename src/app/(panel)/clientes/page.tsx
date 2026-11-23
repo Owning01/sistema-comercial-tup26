@@ -14,7 +14,7 @@ export default async function Clientes({
   searchParams: Promise<{ q?: string }>
 }) {
   const { q } = await searchParams
-  const clientes = await listarClientes({ q })
+  const { data: clientes } = await listarClientes({ q, pageSize: 100 })
 
   const conCuenta = clientes.filter((cliente) => cliente.cuentaCorriente).length
   const deuda = clientes.reduce((total, cliente) => total + cliente.saldo, 0)

@@ -1,12 +1,62 @@
 import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
 import { db } from '@/db/client'
-import { clientes, contadores, facturas, movimientosCuenta, pagos } from '@/db/schema'
+import { clientes, contadores, facturas, movimientosCuenta, pagos, usuarios } from '@/db/schema'
 import { ApiError } from '@/lib/errors'
-import { formatearPesos } from '@/lib/dinero'
+import { formatearNumero, formatearPesos } from '@/lib/dinero'
+import type { Pagina, Paginacion } from '@/lib/paginacion'
 import type { ClienteForm, EditarClienteForm, PagoForm } from '@/lib/validation'
 import type { Sesion } from './auth'
 
-export type FilaCliente = {
+const PUNTO_VENTA = Number(process.env.PUNTO_VENTA ?? 1)
+
+export type ClientePublico = {
+  id: number
+  tipoDoc: string
+  nroDoc: string
+  nombre: string
+  domicilio: string | null
+  telefono: string | null
+  email: string | null
+  cuentaCorriente: boolean
+  limiteCredito: number | null
+  saldo: number
+  disponible: number | null
+  activo: boolean
+}
+
+export type MovimientoCuentaPublico = {
+  id: number
+  fecha: Date
+  tipo: 'debito' | 'credito'
+  importe: number
+  descripcion: string | null
+  facturaId: number | null
+  pagoId: number | null
+  saldo: number
+}
+
+const saldoSql = sql<number>`coalesce(sum(case when ${movimientosCuenta.tipo} = 'debito' then ${movimientosCuenta.importe} else -${movimientosCuenta.importe} end), 0)`
+
+/**
+ * Saldo por cliente como subconsulta correlacionada: permite filtrar y ordenar
+ * por saldo sin traer todos los movimientos a la aplicación.
+ */
+const saldoPorCliente = sql<number>`(
+  select coalesce(sum(case when mc.tipo = 'debito' then mc.importe else -mc.importe end), 0)
+  from movimientos_cuenta mc
+  where mc.cliente_id = "clientes"."id"
+)`
+
+function disponibleDe(cliente: {
+  cuentaCorriente: boolean
+  limiteCredito: number | null
+  saldo: number
+}) {
+  if (!cliente.cuentaCorriente || cliente.limiteCredito === null) return null
+  return Math.max(0, cliente.limiteCredito - cliente.saldo)
+}
+
+function aPublico(fila: {
   id: number
   tipoDoc: string
   nroDoc: string
@@ -18,48 +68,126 @@ export type FilaCliente = {
   limiteCredito: number | null
   activo: boolean
   saldo: number
+}): ClientePublico {
+  const saldo = Number(fila.saldo)
+  return {
+    ...fila,
+    saldo,
+    disponible: disponibleDe({ ...fila, saldo }),
+  }
 }
 
-const saldoSql = sql<number>`coalesce(sum(case when ${movimientosCuenta.tipo} = 'debito' then ${movimientosCuenta.importe} else -${movimientosCuenta.importe} end), 0)`
-
-async function saldosPorCliente() {
-  const filas = await db
-    .select({ clienteId: movimientosCuenta.clienteId, saldo: saldoSql })
-    .from(movimientosCuenta)
-    .groupBy(movimientosCuenta.clienteId)
-
-  return new Map(filas.map((fila) => [fila.clienteId, Number(fila.saldo)]))
-}
-
-export async function listarClientes(filtro: { q?: string } = {}): Promise<FilaCliente[]> {
+export async function listarClientes(
+  filtro: {
+    q?: string
+    conDeuda?: boolean
+    orden?: 'saldo' | 'nombre'
+  } & Partial<Paginacion> = {},
+): Promise<Pagina<ClientePublico> & { totalAdeudado?: number }> {
+  const page = filtro.page ?? 1
+  const pageSize = filtro.pageSize ?? 100
   const q = filtro.q?.trim()
-  const patron = q ? `%${q}%` : null
+  const condiciones = []
+
+  if (q) {
+    const patron = `%${q}%`
+    const documento = `%${q.replace(/[.\s-]/g, '')}%`
+    condiciones.push(
+      or(
+        like(clientes.nombre, patron),
+        sql`replace(replace(${clientes.nroDoc}, '.', ''), '-', '') like ${documento}`,
+      ),
+    )
+  }
+  if (filtro.conDeuda) condiciones.push(sql`${saldoPorCliente} > 0`)
+
+  const where = condiciones.length ? and(...condiciones) : undefined
+
+  const [conteo] = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(clientes)
+    .where(where)
 
   const filas = await db
-    .select()
+    .select({
+      id: clientes.id,
+      tipoDoc: clientes.tipoDoc,
+      nroDoc: clientes.nroDoc,
+      nombre: clientes.nombre,
+      domicilio: clientes.domicilio,
+      telefono: clientes.telefono,
+      email: clientes.email,
+      cuentaCorriente: clientes.cuentaCorriente,
+      limiteCredito: clientes.limiteCredito,
+      activo: clientes.activo,
+      saldo: saldoPorCliente,
+    })
     .from(clientes)
-    .where(patron ? or(like(clientes.nombre, patron), like(clientes.nroDoc, patron)) : undefined)
-    .orderBy(asc(clientes.nombre))
+    .where(where)
+    .orderBy(
+      filtro.orden === 'saldo' ? desc(saldoPorCliente) : asc(clientes.nombre),
+      asc(clientes.id),
+    )
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
 
-  const saldos = await saldosPorCliente()
+  const resultado: Pagina<ClientePublico> & { totalAdeudado?: number } = {
+    data: filas.map(aPublico),
+    page,
+    pageSize,
+    total: Number(conteo.total),
+  }
 
-  return filas.map((cliente) => ({
-    ...cliente,
-    saldo: saldos.get(cliente.id) ?? 0,
-  }))
+  if (filtro.conDeuda) {
+    const [deuda] = await db
+      .select({
+        total: sql<number>`coalesce(sum(case when ${saldoPorCliente} > 0 then ${saldoPorCliente} else 0 end), 0)`,
+      })
+      .from(clientes)
+      .where(where)
+
+    resultado.totalAdeudado = Number(deuda.total)
+  }
+
+  return resultado
 }
 
-export async function obtenerCliente(id: number): Promise<FilaCliente> {
-  const [cliente] = await db.select().from(clientes).where(eq(clientes.id, id)).limit(1)
-
-  if (!cliente) throw new ApiError(404, 'CLIENTE_NO_ENCONTRADO', 'El cliente no existe.')
-
+export async function obtenerCliente(id: number) {
   const [fila] = await db
-    .select({ saldo: saldoSql })
-    .from(movimientosCuenta)
-    .where(eq(movimientosCuenta.clienteId, id))
+    .select({
+      id: clientes.id,
+      tipoDoc: clientes.tipoDoc,
+      nroDoc: clientes.nroDoc,
+      nombre: clientes.nombre,
+      domicilio: clientes.domicilio,
+      telefono: clientes.telefono,
+      email: clientes.email,
+      cuentaCorriente: clientes.cuentaCorriente,
+      limiteCredito: clientes.limiteCredito,
+      activo: clientes.activo,
+      saldo: saldoPorCliente,
+    })
+    .from(clientes)
+    .where(eq(clientes.id, id))
+    .limit(1)
 
-  return { ...cliente, saldo: Number(fila?.saldo ?? 0) }
+  if (!fila) throw new ApiError(404, 'NO_ENCONTRADO', 'El cliente no existe.')
+
+  const ultimasFacturas = await db
+    .select({
+      id: facturas.id,
+      puntoVenta: facturas.puntoVenta,
+      numero: facturas.numero,
+      fecha: facturas.fecha,
+      total: facturas.total,
+      estado: facturas.estado,
+    })
+    .from(facturas)
+    .where(eq(facturas.clienteId, id))
+    .orderBy(desc(facturas.fecha), desc(facturas.id))
+    .limit(6)
+
+  return { ...aPublico(fila), ultimasFacturas }
 }
 
 async function documentoLibre(nroDoc: string, exceptoId?: number) {
@@ -92,14 +220,23 @@ export async function crearCliente(datos: ClienteForm) {
     })
     .returning()
 
-  return creado
+  return aPublico({ ...creado, saldo: 0 })
 }
 
 export async function editarCliente(id: number, datos: EditarClienteForm) {
-  await obtenerCliente(id)
+  const actual = await obtenerCliente(id)
   await documentoLibre(datos.nroDoc, id)
 
-  const [actualizado] = await db
+  const dejaDeUsarCuenta = actual.cuentaCorriente && !datos.cuentaCorriente
+  if ((!datos.activo || dejaDeUsarCuenta) && actual.saldo !== 0) {
+    throw new ApiError(
+      422,
+      'SALDO_PENDIENTE',
+      `El cliente tiene un saldo pendiente de ${formatearPesos(actual.saldo)}. Regularizalo antes de dar de baja la cuenta.`,
+    )
+  }
+
+  await db
     .update(clientes)
     .set({
       tipoDoc: datos.tipoDoc,
@@ -113,25 +250,33 @@ export async function editarCliente(id: number, datos: EditarClienteForm) {
       activo: datos.activo,
     })
     .where(eq(clientes.id, id))
-    .returning()
 
-  if (!actualizado) {
-    throw new ApiError(404, 'CLIENTE_NO_ENCONTRADO', 'El cliente no existe.')
-  }
-
-  return actualizado
+  return obtenerCliente(id)
 }
 
-export async function registrarPago(sesion: Sesion, clienteId: number, datos: PagoForm) {
+export async function registrarPago(
+  sesion: Sesion,
+  clienteId: number,
+  datos: PagoForm,
+  opciones: { fecha?: Date } = {},
+) {
   return db.transaction(async (tx) => {
     const [cliente] = await tx.select().from(clientes).where(eq(clientes.id, clienteId)).limit(1)
 
     if (!cliente) {
-      throw new ApiError(404, 'CLIENTE_NO_ENCONTRADO', 'El cliente no existe.')
+      throw new ApiError(404, 'NO_ENCONTRADO', 'El cliente no existe.')
     }
 
     if (!cliente.activo) {
-      throw new ApiError(422, 'CLIENTE_INACTIVO', 'El cliente está inactivo y no puede recibir pagos.')
+      throw new ApiError(422, 'VALIDACION', 'El cliente está inactivo y no puede recibir pagos.')
+    }
+
+    if (!cliente.cuentaCorriente) {
+      throw new ApiError(
+        422,
+        'CUENTA_CORRIENTE_NO_HABILITADA',
+        `${cliente.nombre} no tiene la cuenta corriente habilitada.`,
+      )
     }
 
     const [fila] = await tx
@@ -144,7 +289,7 @@ export async function registrarPago(sesion: Sesion, clienteId: number, datos: Pa
     if (datos.importe > saldo) {
       throw new ApiError(
         422,
-        'PAGO_EXCEDE_SALDO',
+        'PAGO_SUPERA_DEUDA',
         `El pago supera el saldo deudor de ${formatearPesos(saldo)}.`,
       )
     }
@@ -167,23 +312,90 @@ export async function registrarPago(sesion: Sesion, clienteId: number, datos: Pa
         medio: datos.medio,
         observacion: datos.observacion,
         usuarioId: sesion.id,
+        ...(opciones.fecha ? { fecha: opciones.fecha } : {}),
       })
       .returning()
+
+    const numeroRecibo = `R ${formatearNumero(PUNTO_VENTA, pago.numero)}`
 
     await tx.insert(movimientosCuenta).values({
       clienteId,
       tipo: 'credito',
       importe: datos.importe,
-      descripcion: `Pago recibo ${String(pago.numero).padStart(8, '0')}`,
+      descripcion: `Recibo ${numeroRecibo}`,
       pagoId: pago.id,
+      ...(opciones.fecha ? { fecha: opciones.fecha } : {}),
     })
 
-    return pago
+    const [usuario] = await tx
+      .select({ id: usuarios.id, nombre: usuarios.nombre })
+      .from(usuarios)
+      .where(eq(usuarios.id, sesion.id))
+      .limit(1)
+
+    return {
+      id: pago.id,
+      numeroRecibo,
+      fecha: pago.fecha,
+      cliente: { id: cliente.id, nombre: cliente.nombre },
+      importe: pago.importe,
+      medio: pago.medio,
+      usuario: usuario ?? { id: sesion.id, nombre: sesion.nombre },
+      saldoCliente: saldo - datos.importe,
+    }
   })
 }
 
-export async function listarMovimientosCuenta(clienteId: number) {
-  return db
+export async function obtenerPago(id: number) {
+  const [fila] = await db
+    .select({
+      id: pagos.id,
+      numero: pagos.numero,
+      fecha: pagos.fecha,
+      importe: pagos.importe,
+      medio: pagos.medio,
+      observacion: pagos.observacion,
+      clienteId: clientes.id,
+      clienteNombre: clientes.nombre,
+      usuarioId: usuarios.id,
+      usuarioNombre: usuarios.nombre,
+      saldo: saldoPorCliente,
+    })
+    .from(pagos)
+    .innerJoin(clientes, eq(pagos.clienteId, clientes.id))
+    .leftJoin(usuarios, eq(pagos.usuarioId, usuarios.id))
+    .where(eq(pagos.id, id))
+    .limit(1)
+
+  if (!fila) throw new ApiError(404, 'NO_ENCONTRADO', 'El pago no existe.')
+
+  return {
+    id: fila.id,
+    numeroRecibo: `R ${formatearNumero(PUNTO_VENTA, fila.numero)}`,
+    fecha: fila.fecha,
+    cliente: { id: fila.clienteId, nombre: fila.clienteNombre },
+    importe: fila.importe,
+    medio: fila.medio,
+    observacion: fila.observacion,
+    usuario:
+      fila.usuarioId === null
+        ? null
+        : { id: fila.usuarioId, nombre: fila.usuarioNombre ?? 'Usuario' },
+    saldoCliente: Number(fila.saldo),
+  }
+}
+
+/**
+ * Movimientos en orden cronológico con el saldo acumulado en cada renglón
+ * (RF-C4). Si `desde` corta el historial, `saldoAnterior` trae lo acumulado.
+ */
+export async function obtenerCuentaCorriente(
+  clienteId: number,
+  filtro: { desde?: Date; hasta?: Date } = {},
+) {
+  const cliente = await obtenerCliente(clienteId)
+
+  const filas = await db
     .select({
       id: movimientosCuenta.id,
       tipo: movimientosCuenta.tipo,
@@ -192,22 +404,55 @@ export async function listarMovimientosCuenta(clienteId: number) {
       fecha: movimientosCuenta.fecha,
       facturaId: movimientosCuenta.facturaId,
       pagoId: movimientosCuenta.pagoId,
-      facturaNumero: facturas.numero,
-      facturaPuntoVenta: facturas.puntoVenta,
-      pagoNumero: pagos.numero,
     })
     .from(movimientosCuenta)
-    .leftJoin(facturas, eq(movimientosCuenta.facturaId, facturas.id))
-    .leftJoin(pagos, eq(movimientosCuenta.pagoId, pagos.id))
     .where(eq(movimientosCuenta.clienteId, clienteId))
-    .orderBy(desc(movimientosCuenta.fecha), desc(movimientosCuenta.id))
-    .limit(100)
+    .orderBy(asc(movimientosCuenta.fecha), asc(movimientosCuenta.id))
+
+  let acumulado = 0
+  let saldoAnterior = 0
+  const movimientos: MovimientoCuentaPublico[] = []
+
+  for (const fila of filas) {
+    const delta = fila.tipo === 'debito' ? fila.importe : -fila.importe
+    acumulado += delta
+
+    if (filtro.desde && fila.fecha < filtro.desde) {
+      saldoAnterior = acumulado
+      continue
+    }
+    if (filtro.hasta && fila.fecha > filtro.hasta) continue
+
+    movimientos.push({
+      id: fila.id,
+      fecha: fila.fecha,
+      tipo: fila.tipo,
+      importe: fila.importe,
+      descripcion: fila.descripcion,
+      facturaId: fila.facturaId,
+      pagoId: fila.pagoId,
+      saldo: acumulado,
+    })
+  }
+
+  return {
+    cliente: { id: cliente.id, nombre: cliente.nombre },
+    saldoAnterior,
+    movimientos,
+    saldo: acumulado,
+  }
+}
+
+/** Compatibilidad con la pantalla del cliente: mismo historial, más nuevo primero. */
+export async function listarMovimientosCuenta(clienteId: number) {
+  const cuenta = await obtenerCuentaCorriente(clienteId)
+  return [...cuenta.movimientos].reverse()
 }
 
 /** Clientes activos para elegir en el punto de venta. */
 export async function clientesParaVenta() {
-  const filas = await listarClientes()
-  return filas.filter((cliente) => cliente.activo)
+  const { data } = await listarClientes({ pageSize: 100 })
+  return data.filter((cliente) => cliente.activo)
 }
 
 /** Saldo y límite disponibles, para validar una venta en cuenta corriente. */

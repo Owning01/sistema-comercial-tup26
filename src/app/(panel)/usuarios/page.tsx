@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function Usuarios() {
   const sesion = await requerirAdmin()
-  const usuarios = await listarUsuarios()
+  const { data: usuarios } = await listarUsuarios(sesion, { pageSize: 100 })
   const activos = usuarios.filter((usuario) => usuario.activo).length
 
   return (

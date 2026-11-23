@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 import { formatearPesos, formatearNumero } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { listarVentas, resumenVentas } from '@/server/ventas'
@@ -21,7 +22,10 @@ export default async function Ventas({
   searchParams: Promise<{ q?: string }>
 }) {
   const { q } = await searchParams
-  const [ventas, resumen] = await Promise.all([listarVentas({ q }), resumenVentas()])
+  const [{ data: ventas }, resumen] = await Promise.all([
+    listarVentas({ q }, { page: 1, pageSize: 100 }),
+    resumenVentas(),
+  ])
 
   return (
     <div className="max-w-5xl">
@@ -30,7 +34,8 @@ export default async function Ventas({
           <p className="font-mono text-xs tracking-[0.14em] text-stone-500 uppercase">Ventas</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">Comprobantes</h1>
           <p className="mt-2 max-w-prose text-stone-600">
-            Cada venta conserva el detalle y los precios del momento. No se edita ni se anula.
+            Cada venta conserva el detalle y los precios del momento. No se edita: se anula con
+            motivo y queda registrada.
           </p>
         </div>
         <Link
@@ -134,7 +139,10 @@ export default async function Ventas({
                 <p className="mt-1 text-sm">{venta.clienteNombre ?? 'Consumidor final'}</p>
                 <p className="mt-1 flex justify-between gap-3 text-xs text-stone-500">
                   <span>{formatearFecha(venta.fecha)}</span>
-                  <span>{nombrePago[venta.formaPago] ?? venta.formaPago}</span>
+                  <span>
+                    {nombrePago[venta.formaPago] ?? venta.formaPago}
+                    {venta.estado === 'anulada' ? ' · Anulada' : ''}
+                  </span>
                 </p>
               </li>
             ))}
@@ -148,6 +156,7 @@ export default async function Ventas({
                   <th className="px-4 py-2.5 font-medium">Fecha</th>
                   <th className="px-4 py-2.5 font-medium">Cliente</th>
                   <th className="px-4 py-2.5 font-medium">Pago</th>
+                  <th className="px-4 py-2.5 font-medium">Estado</th>
                   <th className="px-4 py-2.5 text-right font-medium">Total</th>
                 </tr>
               </thead>
@@ -171,6 +180,13 @@ export default async function Ventas({
                     <td className="px-4 py-2.5">{venta.clienteNombre ?? 'Consumidor final'}</td>
                     <td className="px-4 py-2.5 text-stone-600">
                       {nombrePago[venta.formaPago] ?? venta.formaPago}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {venta.estado === 'anulada' ? (
+                        <Badge variant="destructive">Anulada</Badge>
+                      ) : (
+                        <Badge variant="secondary">Emitida</Badge>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-right font-medium tabular-nums">
                       {formatearPesos(venta.total)}

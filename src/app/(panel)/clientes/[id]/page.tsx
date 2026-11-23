@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { formatearPesos, formatearNumero } from '@/lib/dinero'
+import { formatearPesos } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { ApiError } from '@/lib/errors'
 import { actualizarCliente } from '@/server/actions/clientes'
@@ -131,15 +131,18 @@ export default async function DetalleCliente({ params }: { params: Promise<{ id:
                   <p className="mt-2 text-sm">{movimiento.descripcion ?? 'Movimiento'}</p>
                   <p className="mt-2 flex justify-between gap-3 text-xs text-stone-500">
                     <span className="tabular-nums">{formatearFecha(movimiento.fecha)}</span>
-                    {movimiento.facturaId ? (
+                    <span className="tabular-nums">Saldo {formatearPesos(movimiento.saldo)}</span>
+                  </p>
+                  {movimiento.facturaId ? (
+                    <p className="mt-1 text-xs">
                       <Link
                         href={`/ventas/${movimiento.facturaId}`}
                         className="underline underline-offset-4"
                       >
                         Ver comprobante
                       </Link>
-                    ) : null}
-                  </p>
+                    </p>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -152,6 +155,7 @@ export default async function DetalleCliente({ params }: { params: Promise<{ id:
                     <th className="px-4 py-2.5 font-medium">Tipo</th>
                     <th className="px-4 py-2.5 font-medium">Detalle</th>
                     <th className="px-4 py-2.5 text-right font-medium">Importe</th>
+                    <th className="px-4 py-2.5 text-right font-medium">Saldo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -177,20 +181,11 @@ export default async function DetalleCliente({ params }: { params: Promise<{ id:
                             href={`/ventas/${movimiento.facturaId}`}
                             className="underline-offset-4 hover:underline"
                           >
-                            {movimiento.descripcion ??
-                              `Factura ${formatearNumero(
-                                movimiento.facturaPuntoVenta ?? 1,
-                                movimiento.facturaNumero ?? 0,
-                              )}`}
+                            {movimiento.descripcion ?? 'Factura'}
                           </Link>
                         ) : (
                           (movimiento.descripcion ?? 'Movimiento')
                         )}
-                        {movimiento.pagoId && movimiento.pagoNumero ? (
-                          <span className="block text-xs text-stone-500">
-                            Recibo {String(movimiento.pagoNumero).padStart(8, '0')}
-                          </span>
-                        ) : null}
                       </td>
                       <td
                         className={
@@ -201,6 +196,9 @@ export default async function DetalleCliente({ params }: { params: Promise<{ id:
                       >
                         {movimiento.tipo === 'debito' ? '+' : '−'}
                         {formatearPesos(movimiento.importe)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right tabular-nums">
+                        {formatearPesos(movimiento.saldo)}
                       </td>
                     </tr>
                   ))}

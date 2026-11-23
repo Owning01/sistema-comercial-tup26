@@ -24,13 +24,13 @@ export async function guardarUsuario(
   _previo: EstadoUsuario,
   formData: FormData,
 ): Promise<EstadoUsuario> {
-  await requerirAdmin()
+  const sesion = await requerirAdmin()
   const datos = usuarioSchema.safeParse(Object.fromEntries(formData))
 
   if (!datos.success) return { error: primerError(datos.error.issues) }
 
   try {
-    await crearUsuario(datos.data)
+    await crearUsuario(sesion, datos.data)
   } catch (error) {
     return { error: comoError(error) }
   }

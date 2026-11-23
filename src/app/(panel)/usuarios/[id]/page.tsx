@@ -18,7 +18,7 @@ export default async function DetalleUsuario({ params }: { params: Promise<{ id:
 
   let usuario
   try {
-    usuario = await obtenerUsuario(id)
+    usuario = await obtenerUsuario(sesion, id)
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) notFound()
     throw error

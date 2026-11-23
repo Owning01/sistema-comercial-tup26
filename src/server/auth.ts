@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SignJWT, jwtVerify } from 'jose'
+import { buscarUsuario } from './usuarios'
 
 /**
  * La sesion es un JWT firmado que viaja en una cookie httpOnly.
@@ -47,6 +48,9 @@ export async function crearSesion(usuario: { id: number; nombre: string; rol: Ro
 /**
  * Una lectura por pedido: si el layout y la pagina preguntan, se verifica una
  * sola vez. `cache` de React memoiza mientras dura el render.
+ *
+ * El usuario se vuelve a leer de la base: un usuario desactivado o con otro
+ * rol pierde el acceso de inmediato aunque conserve la cookie.
  */
 export const leerSesion = cache(async (): Promise<Sesion | null> => {
   const store = await cookies()
@@ -57,11 +61,11 @@ export const leerSesion = cache(async (): Promise<Sesion | null> => {
     const { payload } = await jwtVerify(token, secreto(), { algorithms: ['HS256'] })
     const id = Number(payload.sub)
     if (!Number.isInteger(id) || id <= 0) return null
-    return {
-      id,
-      nombre: typeof payload.nombre === 'string' ? payload.nombre : '',
-      rol: payload.rol === 'admin' ? 'admin' : 'vendedor',
-    }
+
+    const usuario = await buscarUsuario(id)
+    if (!usuario || !usuario.activo) return null
+
+    return { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol }
   } catch {
     return null
   }

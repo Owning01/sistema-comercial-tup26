@@ -10,7 +10,10 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function NuevaVenta() {
-  const [productos, clientes] = await Promise.all([listarProductos(), clientesParaVenta()])
+  const [{ data: productos }, clientes] = await Promise.all([
+    listarProductos({ activo: true, pageSize: 100 }),
+    clientesParaVenta(),
+  ])
 
   return (
     <div className="max-w-6xl">

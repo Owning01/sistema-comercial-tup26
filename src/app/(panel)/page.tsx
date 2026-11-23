@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { formatearNumero, formatearPesos } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { requerirSesion } from '@/server/auth'
-import { resumenVentas } from '@/server/ventas'
+import { resumenTablero, resumenVentas } from '@/server/ventas'
+import { GraficosTablero } from './graficos'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ const nombrePago: Record<string, string> = {
 
 export default async function Inicio() {
   const sesion = await requerirSesion()
-  const resumen = await resumenVentas()
+  const [resumen, tablero] = await Promise.all([resumenVentas(), resumenTablero()])
 
   const hoy = new Intl.DateTimeFormat('es-AR', {
     dateStyle: 'long',
@@ -41,7 +42,7 @@ export default async function Inicio() {
             {formatearPesos(resumen.mes.total)}
           </dd>
           <dd className="text-xs text-stone-500 tabular-nums">
-            {resumen.mes.cantidad} {resumen.mes.cantidad === 1 ? 'venta' : 'ventas'}
+            Ticket promedio {formatearPesos(tablero.mes.ticketPromedio)}
           </dd>
         </div>
         <div className="bg-white px-4 py-4">
@@ -85,6 +86,17 @@ export default async function Inicio() {
         >
           Nuevo cliente
         </Link>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="mb-3 text-sm font-medium tracking-wide text-stone-500 uppercase">
+          Comportamiento del mes
+        </h2>
+        <GraficosTablero
+          ventasDiarias={tablero.ventasDiarias}
+          porFormaDePago={tablero.porFormaDePago}
+          masVendidos={tablero.masVendidos}
+        />
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-2">

@@ -48,7 +48,10 @@ export default async function DetalleProducto({ params }: { params: Promise<{ id
     throw error
   }
 
-  const [categorias, movimientos] = await Promise.all([listarCategorias(), listarMovimientos(id)])
+  const [categorias, { data: movimientos }] = await Promise.all([
+    listarCategorias(),
+    listarMovimientos(id, { page: 1, pageSize: 50 }),
+  ])
   const bajoMinimo = producto.existencia <= producto.stockMinimo
 
   return (
@@ -65,7 +68,7 @@ export default async function DetalleProducto({ params }: { params: Promise<{ id
           <p className="font-mono text-xs text-stone-500">{producto.codigo}</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">{producto.descripcion}</h1>
           <p className="mt-2 text-stone-600">
-            {producto.categoria ?? 'Sin categoría'}
+            {producto.categoria?.nombre ?? 'Sin categoría'}
             {producto.activo ? null : ' · Producto inactivo, no se puede vender'}
           </p>
         </div>

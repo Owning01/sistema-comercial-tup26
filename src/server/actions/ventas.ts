@@ -5,11 +5,16 @@ import { redirect } from 'next/navigation'
 import { aCentavos } from '@/lib/dinero'
 import { ApiError } from '@/lib/errors'
 import { ventaSchema } from '@/lib/validation'
-import { requerirSesion } from '@/server/auth'
-import { registrarVenta } from '@/server/ventas'
+import { requerirAdmin, requerirSesion } from '@/server/auth'
+import { anularVenta, registrarVenta } from '@/server/ventas'
 
 export type EstadoVenta = {
   error?: string
+}
+
+export type EstadoAnulacion = {
+  error?: string
+  ok?: string
 }
 
 function primerError(issues: { message: string }[]) {
@@ -39,10 +44,21 @@ export async function confirmarVenta(
     return { error: 'El efectivo recibido no es un importe válido.' }
   }
 
+  const formaPago = formData.get('formaPago')
+  const tarjeta =
+    formaPago === 'tarjeta'
+      ? {
+          tipo: String(formData.get('tarjetaTipo') ?? ''),
+          marca: String(formData.get('tarjetaMarca') ?? '').trim(),
+          ultimos4: String(formData.get('tarjetaUltimos4') ?? '').trim(),
+        }
+      : null
+
   const datos = ventaSchema.safeParse({
     clienteId,
-    formaPago: formData.get('formaPago'),
+    formaPago,
     montoRecibido,
+    tarjeta,
     items,
   })
 
@@ -62,4 +78,30 @@ export async function confirmarVenta(
   revalidatePath('/')
   if (datos.data.clienteId) revalidatePath(`/clientes/${datos.data.clienteId}`)
   redirect(`/ventas/${facturaId}`)
+}
+
+export async function anularFactura(
+  _previo: EstadoAnulacion,
+  formData: FormData,
+): Promise<EstadoAnulacion> {
+  const sesion = await requerirAdmin()
+  const facturaId = Number(formData.get('facturaId'))
+  const motivo = String(formData.get('motivo') ?? '').trim()
+
+  if (!Number.isInteger(facturaId) || facturaId <= 0) {
+    return { error: 'Comprobante inválido.' }
+  }
+
+  try {
+    const factura = await anularVenta(sesion, facturaId, motivo)
+    revalidatePath('/ventas')
+    revalidatePath(`/ventas/${facturaId}`)
+    revalidatePath('/productos')
+    revalidatePath('/')
+    if (factura.cliente) revalidatePath(`/clientes/${factura.cliente.id}`)
+    return { ok: 'Factura anulada. El stock y la cuenta corriente quedaron actualizados.' }
+  } catch (error) {
+    if (error instanceof ApiError) return { error: error.message }
+    throw error
+  }
 }

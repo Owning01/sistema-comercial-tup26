@@ -3,12 +3,18 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError } from '@/lib/errors'
-import { editarProductoSchema, movimientoSchema, productoSchema } from '@/lib/validation'
-import { requerirSesion } from '@/server/auth'
+import { categoriaSchema, editarProductoSchema, movimientoSchema, productoSchema } from '@/lib/validation'
+import { requerirAdmin, requerirSesion } from '@/server/auth'
+import { crearCategoria, editarCategoria } from '@/server/categorias'
 import { crearProducto, editarProducto, moverStock } from '@/server/productos'
 
 export type EstadoProducto = {
   error?: string
+}
+
+export type EstadoCategoria = {
+  error?: string
+  ok?: string
 }
 
 export type EstadoMovimiento = {
@@ -52,7 +58,7 @@ export async function actualizarProducto(
   _previo: EstadoProducto,
   formData: FormData,
 ): Promise<EstadoProducto> {
-  await requerirSesion()
+  const sesion = await requerirSesion()
   const id = Number(formData.get('id'))
 
   if (!Number.isInteger(id) || id <= 0) {
@@ -66,7 +72,7 @@ export async function actualizarProducto(
   }
 
   try {
-    await editarProducto(id, datos.data)
+    await editarProducto(sesion, id, datos.data)
   } catch (error) {
     return { error: comoError(error) }
   }
@@ -115,4 +121,45 @@ export async function registrarMovimientoGlobal(
 
   revalidatePath('/productos/movimientos')
   redirect('/productos/movimientos')
+}
+
+export async function guardarCategoria(
+  _previo: EstadoCategoria,
+  formData: FormData,
+): Promise<EstadoCategoria> {
+  const sesion = await requerirAdmin()
+  const datos = categoriaSchema.safeParse(Object.fromEntries(formData))
+
+  if (!datos.success) return { error: primerError(datos.error.issues) }
+
+  try {
+    await crearCategoria(sesion, datos.data.nombre)
+  } catch (error) {
+    return { error: comoError(error) }
+  }
+
+  revalidatePath('/productos')
+  revalidatePath('/productos/categorias')
+  return { ok: 'Categoría creada.' }
+}
+
+export async function alternarCategoria(
+  _previo: EstadoCategoria,
+  formData: FormData,
+): Promise<EstadoCategoria> {
+  const sesion = await requerirAdmin()
+  const id = Number(formData.get('id'))
+  const activa = String(formData.get('activa')) === 'true'
+
+  if (!Number.isInteger(id) || id <= 0) return { error: 'Categoría inválida.' }
+
+  try {
+    await editarCategoria(sesion, id, { activa })
+  } catch (error) {
+    return { error: comoError(error) }
+  }
+
+  revalidatePath('/productos')
+  revalidatePath('/productos/categorias')
+  return { ok: activa ? 'Categoría activada.' : 'Categoría desactivada.' }
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useActionState, useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { aCentavos, formatearPesos } from '@/lib/dinero'
-import { confirmarVenta, type EstadoVenta } from '@/server/actions/ventas'
 import { NuevoClienteRapido } from './nuevo-cliente'
 
 type ProductoVenta = {
@@ -12,7 +12,7 @@ type ProductoVenta = {
   precio: number
   existencia: number
   activo: boolean
-  categoria: string | null
+  categoria: { id: number; nombre: string } | null
 }
 
 type ClienteVenta = {
@@ -25,8 +25,6 @@ type ClienteVenta = {
 }
 
 type FormaPago = 'contado' | 'tarjeta' | 'cuenta_corriente'
-
-const inicial: EstadoVenta = {}
 
 const campo =
   'mt-1.5 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10'
@@ -49,11 +47,19 @@ export function PuntoDeVenta({
   const [formaPago, setFormaPago] = useState<FormaPago>('contado')
   const [clienteId, setClienteId] = useState('')
   const [montoRecibido, setMontoRecibido] = useState('')
+  const [tarjetaTipo, setTarjetaTipo] = useState<'debito' | 'credito'>('debito')
+  const [tarjetaMarca, setTarjetaMarca] = useState('Visa')
+  const [tarjetaUltimos4, setTarjetaUltimos4] = useState('')
   const [nuevos, setNuevos] = useState<ClienteVenta[]>([])
   const [nuevoAbierto, setNuevoAbierto] = useState(false)
-  const [estado, enviar, pendiente] = useActionState(confirmarVenta, inicial)
+  const [catalogo, setCatalogo] = useState<ProductoVenta[]>(productos)
+  const [confirmando, setConfirmando] = useState(false)
+  const [errorVenta, setErrorVenta] = useState<string | null>(null)
+  const router = useRouter()
 
-  const porId = new Map(productos.map((producto) => [producto.id, producto]))
+  const porId = new Map(
+    [...productos, ...catalogo].map((producto) => [producto.id, producto]),
+  )
   const clientes = [
     ...new Map([...clientesBase, ...nuevos].map((cliente) => [cliente.id, cliente])).values(),
   ]
@@ -70,17 +76,37 @@ export function PuntoDeVenta({
   const total = renglones.reduce((suma, renglon) => suma + renglon.subtotal, 0)
   const unidades = renglones.reduce((suma, renglon) => suma + renglon.cantidad, 0)
 
-  const filtrados = productos
+  const filtrados = catalogo
     .filter((producto) => producto.activo)
-    .filter((producto) => {
-      const texto = busqueda.trim().toLowerCase()
-      if (!texto) return true
-      return (
-        producto.descripcion.toLowerCase().includes(texto) ||
-        producto.codigo.toLowerCase().includes(texto)
-      )
-    })
     .slice(0, 12)
+
+  // La búsqueda en vivo consulta la API REST, no una copia local.
+  useEffect(() => {
+    const texto = busqueda.trim()
+    if (!texto) {
+      setCatalogo(productos)
+      return
+    }
+
+    let vigente = true
+    const temporizador = setTimeout(async () => {
+      try {
+        const respuesta = await fetch(
+          `/api/productos?q=${encodeURIComponent(texto)}&activo=true&pageSize=12`,
+        )
+        if (!respuesta.ok) return
+        const datos = (await respuesta.json()) as { data: ProductoVenta[] }
+        if (vigente) setCatalogo(datos.data)
+      } catch {
+        // Si la red falla, queda el catálogo que ya estaba en pantalla.
+      }
+    }, 250)
+
+    return () => {
+      vigente = false
+      clearTimeout(temporizador)
+    }
+  }, [busqueda, productos])
 
   const recibido = aCentavos(montoRecibido)
   const vuelto = recibido !== null && recibido >= total ? recibido - total : null
@@ -144,7 +170,54 @@ export function PuntoDeVenta({
 
   const faltanDatos =
     renglones.length === 0 ||
-    (formaPago === 'cuenta_corriente' && (!cliente || !cliente.cuentaCorriente))
+    (formaPago === 'cuenta_corriente' && (!cliente || !cliente.cuentaCorriente)) ||
+    (formaPago === 'tarjeta' && (!tarjetaMarca.trim() || !/^\d{4}$/.test(tarjetaUltimos4)))
+
+  async function confirmar() {
+    if (faltanDatos || confirmando) return
+    setErrorVenta(null)
+    setConfirmando(true)
+
+    const pago =
+      formaPago === 'contado'
+        ? { forma: 'contado', ...(recibido === null ? {} : { montoRecibido: recibido }) }
+        : formaPago === 'tarjeta'
+          ? {
+              forma: 'tarjeta',
+              tarjeta: { tipo: tarjetaTipo, marca: tarjetaMarca, ultimos4: tarjetaUltimos4 },
+            }
+          : { forma: 'cuenta_corriente' }
+
+    try {
+      const respuesta = await fetch('/api/facturas', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ clienteId: cliente?.id ?? null, items, pago }),
+      })
+      const datos = (await respuesta.json()) as {
+        id?: number
+        error?: { message?: string; details?: { mensaje?: string; message?: string }[] }
+      }
+
+      if (!respuesta.ok) {
+        const detalles = (datos.error?.details ?? [])
+          .map((detalle) => detalle.mensaje ?? detalle.message ?? '')
+          .filter(Boolean)
+          .join(' ')
+        setErrorVenta([datos.error?.message, detalles].filter(Boolean).join(' ') || 'No se pudo confirmar la venta.')
+        return
+      }
+
+      if (datos.id) {
+        router.push(`/ventas/${datos.id}`)
+        router.refresh()
+      }
+    } catch {
+      setErrorVenta('No se pudo conectar con el servidor. Revisá la conexión y volvé a intentar.')
+    } finally {
+      setConfirmando(false)
+    }
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -393,10 +466,62 @@ export function PuntoDeVenta({
           ) : null}
 
           {formaPago === 'tarjeta' ? (
-            <p className="mt-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
-              El pago con tarjeta se registra de forma simulada. No se piden ni guardan datos de la
-              tarjeta.
-            </p>
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="tarjetaTipo" className="block text-xs font-medium text-stone-700">
+                    Tipo
+                  </label>
+                  <select
+                    id="tarjetaTipo"
+                    value={tarjetaTipo}
+                    onChange={(evento) =>
+                      setTarjetaTipo(evento.target.value === 'credito' ? 'credito' : 'debito')
+                    }
+                    className={campo}
+                  >
+                    <option value="debito">Débito</option>
+                    <option value="credito">Crédito</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="tarjetaMarca" className="block text-xs font-medium text-stone-700">
+                    Marca
+                  </label>
+                  <select
+                    id="tarjetaMarca"
+                    value={tarjetaMarca}
+                    onChange={(evento) => setTarjetaMarca(evento.target.value)}
+                    className={campo}
+                  >
+                    <option value="Visa">Visa</option>
+                    <option value="Mastercard">Mastercard</option>
+                    <option value="American Express">American Express</option>
+                    <option value="Cabal">Cabal</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="tarjetaUltimos4" className="block text-xs font-medium text-stone-700">
+                  Últimos 4 dígitos
+                </label>
+                <input
+                  id="tarjetaUltimos4"
+                  value={tarjetaUltimos4}
+                  onChange={(evento) =>
+                    setTarjetaUltimos4(evento.target.value.replace(/\D/g, '').slice(0, 4))
+                  }
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={4}
+                  placeholder="1234"
+                  className={`${campo} tabular-nums`}
+                />
+                <p className="mt-1 text-[11px] text-stone-500">
+                  Solo se guardan tipo, marca y últimos 4 dígitos. Nunca el número completo.
+                </p>
+              </div>
+            </div>
           ) : null}
 
           {formaPago === 'cuenta_corriente' ? (
@@ -422,26 +547,20 @@ export function PuntoDeVenta({
             </div>
           ) : null}
 
-          {estado.error ? (
+          {errorVenta ? (
             <p role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {estado.error}
+              {errorVenta}
             </p>
           ) : null}
 
-          <form action={enviar} className="mt-5">
-            <input type="hidden" name="items" value={JSON.stringify(items)} />
-            <input type="hidden" name="formaPago" value={formaPago} />
-            <input type="hidden" name="clienteId" value={clienteId} />
-            <input type="hidden" name="montoRecibido" value={montoRecibido} />
-
-            <button
-              type="submit"
-              disabled={pendiente || faltanDatos}
-              className="w-full rounded-md bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {pendiente ? 'Confirmando…' : `Confirmar venta · ${formatearPesos(total)}`}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={confirmar}
+            disabled={confirmando || faltanDatos}
+            className="mt-5 w-full rounded-md bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {confirmando ? 'Confirmando…' : `Confirmar venta · ${formatearPesos(total)}`}
+          </button>
 
           <p className="mt-3 text-xs text-stone-500">
             Al confirmar se descuenta el stock y se emite el comprobante. Si algo falla, no se

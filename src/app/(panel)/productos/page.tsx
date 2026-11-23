@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatearPesos } from '@/lib/dinero'
+import { leerSesion } from '@/server/auth'
 import { listarProductos } from '@/server/productos'
 
 export const metadata = {
@@ -41,7 +42,10 @@ export default async function Productos({
   searchParams: Promise<{ q?: string }>
 }) {
   const { q } = await searchParams
-  const productos = await listarProductos({ q })
+  const [{ data: productos }, sesion] = await Promise.all([
+    listarProductos({ q, activo: 'todos', pageSize: 100 }),
+    leerSesion(),
+  ])
 
   const valor = productos.reduce((total, p) => total + p.precio * p.existencia, 0)
   const bajoMinimo = productos.filter((p) => p.activo && p.existencia <= p.stockMinimo).length
@@ -57,6 +61,14 @@ export default async function Productos({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {sesion?.rol === 'admin' ? (
+            <Link
+              href="/productos/categorias"
+              className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
+            >
+              Categorías
+            </Link>
+          ) : null}
           <Link
             href="/productos/movimientos"
             className="rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-100"
@@ -158,7 +170,7 @@ export default async function Productos({
                   <span className="shrink-0 text-sm tabular-nums">{formatearPesos(producto.precio)}</span>
                 </div>
                 <p className="mt-1 font-mono text-xs text-stone-500">
-                  {producto.codigo} · {producto.categoria ?? 'Sin categoría'}
+                  {producto.codigo} · {producto.categoria?.nombre ?? 'Sin categoría'}
                   {producto.activo ? '' : ' · Inactivo'}
                 </p>
                 <div className="mt-2 flex items-center justify-between gap-3">
@@ -207,7 +219,7 @@ export default async function Productos({
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-2.5 text-stone-600">{producto.categoria ?? '—'}</td>
+                    <td className="px-4 py-2.5 text-stone-600">{producto.categoria?.nombre ?? '—'}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatearPesos(producto.precio)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <span className="tabular-nums">{producto.existencia}</span>

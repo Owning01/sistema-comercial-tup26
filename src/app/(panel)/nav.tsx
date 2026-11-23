@@ -9,6 +9,7 @@ const enlaces = [
   { href: '/productos', etiqueta: 'Productos y stock' },
   { href: '/clientes', etiqueta: 'Clientes' },
   { href: '/usuarios', etiqueta: 'Usuarios', soloAdmin: true },
+  { href: '/perfil', etiqueta: 'Mi cuenta' },
 ]
 
 export function NavLateral({ esAdmin }: { esAdmin: boolean }) {

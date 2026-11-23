@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import { formatearNumero, formatearPesos } from '@/lib/dinero'
 import { formatearFecha } from '@/lib/fechas'
 import { ApiError } from '@/lib/errors'
+import { leerSesion } from '@/server/auth'
 import { obtenerVenta } from '@/server/ventas'
+import { FormularioAnulacion } from './anulacion-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +29,8 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
     throw error
   }
 
-  const { factura, items } = venta
+  const { factura, items, vendedor } = venta
+  const sesion = await leerSesion()
   const unidades = items.reduce((suma, item) => suma + item.cantidad, 0)
 
   return (
@@ -47,7 +50,13 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
           </h1>
           <p className="mt-2 text-stone-600">{formatearFecha(factura.fecha)}</p>
         </div>
-        <span className="rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">
+        <span
+          className={
+            factura.estado === 'emitida'
+              ? 'rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800'
+              : 'rounded border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-800'
+          }
+        >
           {factura.estado === 'emitida' ? 'Emitida' : 'Anulada'}
         </span>
       </div>
@@ -73,7 +82,13 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
         <div className="rounded-lg border border-stone-200 bg-white px-4 py-3">
           <p className="text-xs text-stone-500">Forma de pago</p>
           <p className="mt-1 font-medium">{nombrePago[factura.formaPago] ?? factura.formaPago}</p>
-          <p className="text-xs text-stone-500">Registró {factura.usuarioNombre ?? 'un usuario'}</p>
+          {factura.formaPago === 'tarjeta' ? (
+            <p className="text-xs text-stone-500">
+              {factura.tarjetaMarca} · {factura.tarjetaTipo === 'credito' ? 'Crédito' : 'Débito'} ·
+              **** {factura.tarjetaUltimos4}
+            </p>
+          ) : null}
+          <p className="text-xs text-stone-500">Registró {vendedor?.nombre ?? 'un usuario'}</p>
         </div>
       </div>
 
@@ -107,8 +122,7 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="mt-6 flex justify-end">
-        <dl className="w-full max-w-xs space-y-2 text-sm">
-          <div className="flex justify-between">
+        <dl className="w-full max-w-xs space-y-2 text-sm">          <div className="flex justify-between">
             <dt className="text-stone-500">Unidades</dt>
             <dd className="tabular-nums">{unidades}</dd>
           </div>
@@ -135,6 +149,30 @@ export default async function Comprobante({ params }: { params: Promise<{ id: st
           ) : null}
         </dl>
       </div>
+
+      {factura.estado === 'anulada' ? (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <p className="font-medium">Factura anulada</p>
+          <p className="mt-1">{factura.motivoAnulacion ?? 'Sin motivo registrado.'}</p>
+          <p className="mt-1 text-xs text-red-800">
+            {factura.anuladaEn ? formatearFecha(factura.anuladaEn) : ''}
+            {venta.anulador ? ` · ${venta.anulador.nombre}` : ''}
+          </p>
+        </div>
+      ) : null}
+
+      {factura.estado === 'emitida' && sesion?.rol === 'admin' ? (
+        <div className="mt-6 rounded-lg border border-stone-200 bg-white px-4 py-4">
+          <h2 className="text-sm font-medium text-stone-700">Anular factura</h2>
+          <p className="mt-1 text-xs text-stone-500">
+            Reingresa el stock de cada renglón. Si la venta fue en cuenta corriente, acredita la
+            deuda. La factura no se borra.
+          </p>
+          <div className="mt-3">
+            <FormularioAnulacion facturaId={factura.id} />
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-200 pt-5">
         <Link

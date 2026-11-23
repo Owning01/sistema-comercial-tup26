@@ -554,7 +554,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
       <a href="#datos"><span>05</span>Datos</a>
       <a href="#conceptos"><span>06</span>Conceptos</a>
       <a href="#flujos"><span>07</span>Flujos</a>
-      <a href="#api"><span>08</span>Server Actions</a>
+      <a href="#api"><span>08</span>API y Server Actions</a>
       <a href="#defensa"><span>09</span>Defensa</a>
       <a href="#cambios"><span>10</span>Cambios</a>
       <a href="#practica"><span>11</span>Práctica</a>
@@ -701,7 +701,8 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <thead><tr><th>El sistema en números</th><th class="num">Cantidad</th><th>Dónde se ve</th></tr></thead>
               <tbody>
                 <tr><td class="model">Tablas</td><td class="num">9 + 1</td><td>Nueve del modelo mínimo y una de contadores para la numeración</td></tr>
-                <tr><td class="model">Server Actions</td><td class="num">13</td><td>En <code>src/server/actions/</code>, una por operación</td></tr>
+                <tr><td class="model">API REST</td><td class="num">31</td><td>En <code>src/app/api/</code>, 23 archivos <code>route.ts</code></td></tr>
+                <tr><td class="model">Server Actions</td><td class="num">17</td><td>En <code>src/server/actions/</code>, para los formularios</td></tr>
                 <tr><td class="model">Roles</td><td class="num">2</td><td><code>admin</code> y <code>vendedor</code></td></tr>
                 <tr><td class="model">Módulos</td><td class="num">5</td><td>Inicio, Ventas, Productos, Clientes, Usuarios</td></tr>
                 <tr><td class="model">Reglas de negocio</td><td class="num">12</td><td>Sección 6 del enunciado, todas en servicios</td></tr>
@@ -747,7 +748,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <span class="sec-no" aria-hidden="true">02</span>
             <div>
               <h2>Tesis</h2>
-              <p class="sec-dek">Cuatro leyes que ordenan todo el sistema. Si entendés estas, el resto se deduce.</p>
+              <p class="sec-dek">Cinco leyes que ordenan todo el sistema. Si entendés estas, el resto se deduce.</p>
             </div>
           </div>
 
@@ -767,6 +768,10 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <div class="law">
               <div class="law-no">L4</div>
               <div><h3>Cada dato derivado tiene una sola fuente.</h3><p>El saldo sale de los movimientos de cuenta. La existencia se guarda, pero solo cambia en <code>moverStock()</code>. El precio y la descripción se copian a la factura para congelarse. Nadie recalcula por su cuenta.</p></div>
+            </div>
+            <div class="law">
+              <div class="law-no">L5</div>
+              <div><h3>Nada confirmado se borra: se revierte.</h3><p>Una factura anulada conserva número, renglones y motivo. El reverso reingresa el stock y acredita la deuda en una transacción. El historial no se reescribe.</p></div>
             </div>
           </div>
 
@@ -1545,50 +1550,36 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </div>
 
           <figure class="code">
-            <p class="cap"><b>scripts/verificar.ts</b><span>la prueba que cierra la defensa</span></p>
-            <pre><code class="lang-ts" data-lang="ts"><span class="t-kw">import</span> { <span class="t-var">sql</span> } <span class="t-kw">from</span> <span class="t-str">"drizzle-orm"</span>;
-<span class="t-kw">import</span> { <span class="t-var">db</span> } <span class="t-kw">from</span> <span class="t-str">"../src/db/client"</span>;
+            <p class="cap"><b>Verificación de consistencia</b><span>tres consultas SQL, sin scripts en el repo</span></p>
+            <pre><code class="lang-sql" data-lang="sql"><span class="t-com">-- 1) La existencia de cada producto tiene que dar la suma de sus movimientos.</span>
+<span class="t-kw">SELECT</span> p.id, p.codigo, p.existencia,
+       <span class="t-fn">COALESCE</span>(<span class="t-fn">SUM</span>(m.cantidad), <span class="t-num">0</span>) <span class="t-kw">AS</span> calculada
+<span class="t-kw">FROM</span> productos p
+<span class="t-kw">LEFT JOIN</span> movimientos_stock m <span class="t-kw">ON</span> m.producto_id = p.id
+<span class="t-kw">GROUP BY</span> p.id
+<span class="t-kw">HAVING</span> p.existencia &lt;&gt; <span class="t-fn">COALESCE</span>(<span class="t-fn">SUM</span>(m.cantidad), <span class="t-num">0</span>);
 
-<span class="t-com">// 1) La existencia de cada producto tiene que dar la suma de sus movimientos.</span>
-<span class="t-kw">const</span> <span class="t-var">stock</span> = <span class="t-ctl">await</span> <span class="t-var">db</span>.<span class="t-fn">all</span>(<span class="t-var">sql</span><span class="t-str">`</span>
-  <span class="t-kw">SELECT</span> <span class="t-var">p</span>.<span class="t-var">id</span>, <span class="t-var">p</span>.<span class="t-var">codigo</span>, <span class="t-var">p</span>.<span class="t-var">existencia</span>,
-         <span class="t-fn">COALESCE</span>(<span class="t-fn">SUM</span>(<span class="t-var">m</span>.<span class="t-var">cantidad</span>), <span class="t-num">0</span>) <span class="t-kw">AS</span> <span class="t-var">calculada</span>
-  <span class="t-kw">FROM</span> <span class="t-var">productos</span> <span class="t-var">p</span>
-  <span class="t-kw">LEFT</span> <span class="t-kw">JOIN</span> <span class="t-var">movimientos_stock</span> <span class="t-var">m</span> <span class="t-kw">ON</span> <span class="t-var">m</span>.<span class="t-var">producto_id</span> = <span class="t-var">p</span>.<span class="t-var">id</span>
-  <span class="t-kw">GROUP</span> <span class="t-kw">BY</span> <span class="t-var">p</span>.<span class="t-var">id</span>
-  <span class="t-kw">HAVING</span> <span class="t-var">p</span>.<span class="t-var">existencia</span> &lt;&gt; <span class="t-fn">COALESCE</span>(<span class="t-fn">SUM</span>(<span class="t-var">m</span>.<span class="t-var">cantidad</span>), <span class="t-num">0</span>)
-<span class="t-str">`</span>);
+<span class="t-com">-- 2) Toda factura emitida en cuenta corriente tiene su débito.</span>
+<span class="t-kw">SELECT</span> f.id, f.numero
+<span class="t-kw">FROM</span> facturas f
+<span class="t-kw">LEFT JOIN</span> movimientos_cuenta m
+  <span class="t-kw">ON</span> m.factura_id = f.id <span class="t-kw">AND</span> m.tipo = <span class="t-str">'debito'</span>
+<span class="t-kw">WHERE</span> f.forma_pago = <span class="t-str">'cuenta_corriente'</span>
+  <span class="t-kw">AND</span> f.estado = <span class="t-str">'emitida'</span>
+  <span class="t-kw">AND</span> m.id <span class="t-kw">IS NULL</span>;
 
-<span class="t-com">// 2) Toda factura emitida en cuenta corriente tiene su débito.</span>
-<span class="t-kw">const</span> <span class="t-var">debitos</span> = <span class="t-ctl">await</span> <span class="t-var">db</span>.<span class="t-fn">all</span>(<span class="t-var">sql</span><span class="t-str">`</span>
-  <span class="t-kw">SELECT</span> <span class="t-var">f</span>.<span class="t-var">id</span>, <span class="t-var">f</span>.<span class="t-var">numero</span>
-  <span class="t-kw">FROM</span> <span class="t-var">facturas</span> <span class="t-var">f</span>
-  <span class="t-kw">LEFT</span> <span class="t-kw">JOIN</span> <span class="t-var">movimientos_cuenta</span> <span class="t-var">m</span>
-    <span class="t-kw">ON</span> <span class="t-var">m</span>.<span class="t-var">factura_id</span> = <span class="t-var">f</span>.<span class="t-var">id</span> <span class="t-kw">AND</span> <span class="t-var">m</span>.<span class="t-var">tipo</span> = <span class="t-str">'debito'</span>
-  <span class="t-kw">WHERE</span> <span class="t-var">f</span>.<span class="t-var">forma_pago</span> = <span class="t-str">'cuenta_corriente'</span>
-    <span class="t-kw">AND</span> <span class="t-var">f</span>.<span class="t-var">estado</span> = <span class="t-str">'emitida'</span>
-    <span class="t-kw">AND</span> <span class="t-var">m</span>.<span class="t-var">id</span> <span class="t-kw">IS</span> <span class="t-kw">NULL</span>
-<span class="t-str">`</span>);
-
-<span class="t-com">// 3) Todo pago tiene su crédito.</span>
-<span class="t-kw">const</span> <span class="t-var">creditos</span> = <span class="t-ctl">await</span> <span class="t-var">db</span>.<span class="t-fn">all</span>(<span class="t-var">sql</span><span class="t-str">`</span>
-  <span class="t-kw">SELECT</span> <span class="t-var">p</span>.<span class="t-var">id</span>, <span class="t-var">p</span>.<span class="t-var">numero</span>
-  <span class="t-kw">FROM</span> <span class="t-var">pagos</span> <span class="t-var">p</span>
-  <span class="t-kw">LEFT</span> <span class="t-kw">JOIN</span> <span class="t-var">movimientos_cuenta</span> <span class="t-var">m</span>
-    <span class="t-kw">ON</span> <span class="t-var">m</span>.<span class="t-var">pago_id</span> = <span class="t-var">p</span>.<span class="t-var">id</span> <span class="t-kw">AND</span> <span class="t-var">m</span>.<span class="t-var">tipo</span> = <span class="t-str">'credito'</span>
-  <span class="t-kw">WHERE</span> <span class="t-var">m</span>.<span class="t-var">id</span> <span class="t-kw">IS</span> <span class="t-kw">NULL</span>
-<span class="t-str">`</span>);
-
-<span class="t-ctl">if</span> (<span class="t-var">stock</span>.<span class="t-var">length</span> || <span class="t-var">debitos</span>.<span class="t-var">length</span> || <span class="t-var">creditos</span>.<span class="t-var">length</span>) {
-  <span class="t-var">console</span>.<span class="t-fn">error</span>({ <span class="t-var">stock</span>, <span class="t-var">debitos</span>, <span class="t-var">creditos</span> });
-  <span class="t-var">process</span>.<span class="t-fn">exit</span>(<span class="t-num">1</span>);
-}
-<span class="t-var">console</span>.<span class="t-fn">log</span>(<span class="t-str">"OK: stock y cuenta corriente cuadran."</span>);</code></pre>
+<span class="t-com">-- 3) Todo pago tiene su crédito.</span>
+<span class="t-kw">SELECT</span> p.id, p.numero
+<span class="t-kw">FROM</span> pagos p
+<span class="t-kw">LEFT JOIN</span> movimientos_cuenta m
+  <span class="t-kw">ON</span> m.pago_id = p.id <span class="t-kw">AND</span> m.tipo = <span class="t-str">'credito'</span>
+<span class="t-kw">WHERE</span> m.id <span class="t-kw">IS NULL</span>;
+<span class="t-com">-- Las tres tienen que devolver 0 filas.</span></code></pre>
           </figure>
 
           <div class="note">
             <b>Para la defensa</b>
-            <p>Corré este script antes de la demo y mostralo. Un sistema que dice “cuadra” no es lo mismo que un sistema que lo demuestra con una consulta.</p>
+            <p>Pegá las tres consultas en la consola de Turso o en cualquier cliente SQL y mostrá que devuelven 0 filas. Un sistema que dice “cuadra” no es lo mismo que un sistema que lo demuestra con una consulta. No hace falta un script versionado.</p>
           </div>
         </section>
 
@@ -1621,7 +1612,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <ol class="index-list" id="conceptIndex">
             <li data-zone="base"><a href="#c-app-router"><span class="no">01</span><span class="name">App Router</span><span class="zone">Base</span></a></li>
             <li data-zone="base"><a href="#c-componentes"><span class="no">02</span><span class="name">Server y Client Components</span><span class="zone">Base</span></a></li>
-            <li data-zone="servidor"><a href="#c-server-actions"><span class="no">03</span><span class="name">Server Actions</span><span class="zone">Servidor</span></a></li>
+            <li data-zone="servidor"><a href="#c-server-actions"><span class="no">03</span><span class="name">API y Server Actions</span><span class="zone">Servidor</span></a></li>
             <li data-zone="base"><a href="#c-drizzle"><span class="no">04</span><span class="name">Esquema Drizzle</span><span class="zone">Base</span></a></li>
             <li data-zone="base"><a href="#c-migraciones"><span class="no">05</span><span class="name">Migraciones</span><span class="zone">Base</span></a></li>
             <li data-zone="base"><a href="#c-turso"><span class="no">06</span><span class="name">libSQL y Turso</span><span class="zone">Base</span></a></li>
@@ -1656,16 +1647,16 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <p class="concept-def">Los componentes son de servidor por defecto: consultan la base y renderizan HTML. Los interactivos llevan <code>"use client"</code> y usan estado, eventos y hooks.</p>
               <div class="concept-grid">
                 <div><h4>Por qué importa</h4><p>Menos JavaScript en el navegador, secretos fuera del cliente y listados que se renderizan con datos frescos. La interactividad queda aislada en componentes chicos.</p></div>
-                <div><h4>Cómo se usa</h4><p>Listados y fichas son de servidor. El formulario de venta, los modales, la búsqueda en vivo y los gráficos son de cliente. Las mutaciones van por Server Actions.</p></div>
+                <div><h4>Cómo se usa</h4><p>Listados y fichas son de servidor. El formulario de venta, los modales, la búsqueda en vivo y los gráficos son de cliente. Las mutaciones de formularios van por Server Actions; el POS confirma contra <code>POST /api/facturas</code>.</p></div>
               </div>
               <p class="concept-src">En el código · <code>src/app/(panel)/productos/page.tsx</code> · <code>src/app/(panel)/ventas/nueva/pos.tsx</code></p>
             </article>
 
             <article class="concept" id="c-server-actions">
-              <header class="concept-head"><span class="concept-no">03</span><h3>Server Actions</h3><span class="pill">Servidor</span></header>
+              <header class="concept-head"><span class="concept-no">03</span><h3>API REST y Server Actions</h3><span class="pill">Servidor</span></header>
               <p class="concept-def">Una función marcada con <code>"use server"</code> corre en el servidor. El formulario la invoca con <code>action</code>, recibe el <code>FormData</code> y devuelve un estado.</p>
               <div class="concept-grid">
-                <div><h4>Por qué importa</h4><p>La validación y la escritura quedan en el servidor sin abrir una API pública. El formulario muestra el error que devuelve la acción y la página se vuelve a renderizar con los datos frescos.</p></div>
+                <div><h4>Por qué importa</h4><p>La validación y la escritura quedan en el servidor; la API REST queda disponible para el POS y para cualquier cliente. El formulario muestra el error que devuelve la acción y la página se vuelve a renderizar con los datos frescos.</p></div>
                 <div><h4>Cómo se usa</h4><p><code>useActionState</code> da el estado y el <code>pending</code>. La acción valida con Zod, llama al servicio, ejecuta <code>revalidatePath</code> y redirige. El servicio es el único que decide.</p></div>
               </div>
               <p class="concept-src">En el código · <code>src/server/actions/ventas.ts</code> · <code>src/app/(panel)/ventas/nueva/pos.tsx</code></p>
@@ -1793,12 +1784,12 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
             <article class="concept" id="c-interfaz">
               <header class="concept-head"><span class="concept-no">16</span><h3>Layout, formatos y estados</h3><span class="pill">Interfaz</span></header>
-              <p class="concept-def">Un layout con panel lateral y barra superior; un módulo único de formatos; y tres estados para cada listado: cargando, vacío y error.</p>
+              <p class="concept-def">Un layout con panel lateral y barra superior; un módulo único de formatos; y componentes de shadcn/ui para las piezas repetidas.</p>
               <div class="concept-grid">
                 <div><h4>Por qué importa</h4><p>La consistencia se ve en los detalles: el mismo botón, el mismo espaciado, la misma moneda. Si cada página formatea a su manera, el producto parece armado por tres personas distintas.</p></div>
-                <div><h4>Cómo se usa</h4><p><code>(panel)/layout.tsx</code> con el sidebar; <code>formatearMoneda</code> y <code>formatearFecha</code>; <code>Skeleton</code>, <code>EmptyState</code> y <code>ErrorState</code>; <code>Sheet</code> de shadcn para el menú en móvil.</p></div>
+                <div><h4>Cómo se usa</h4><p><code>(panel)/layout.tsx</code> con el sidebar; <code>formatearPesos</code> y las fechas de <code>src/lib/fechas.ts</code>; <code>Button</code>, <code>Badge</code>, <code>Input</code>, <code>Card</code> y <code>Table</code> de shadcn/ui; los listados vacíos muestran un texto y un enlace, sin componente aparte.</p></div>
               </div>
-              <p class="concept-src">En el código · <code>src/app/(panel)/layout.tsx</code> · <code>src/lib/formatos.ts</code> · <code>src/components/estados.tsx</code></p>
+              <p class="concept-src">En el código · <code>src/app/(panel)/layout.tsx</code> · <code>src/lib/dinero.ts</code> · <code>src/components/ui/</code></p>
             </article>
 
             <article class="concept" id="c-tablero">
@@ -1806,9 +1797,9 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <p class="concept-def">Una sola respuesta con todos los indicadores: ventas de hoy y del mes, saldos, bajo mínimo, serie de 30 días, formas de pago y más vendidos.</p>
               <div class="concept-grid">
                 <div><h4>Por qué importa</h4><p>El gráfico necesita 30 puntos, incluidos los días sin ventas. Si la consulta devuelve solo los días con datos, el gráfico miente o deja huecos.</p></div>
-                <div><h4>Cómo se usa</h4><p><code>GET /api/tablero</code> agrupa por día y por forma de pago, y completa los días faltantes en JavaScript con cero. Solo cuenta facturas <code>emitida</code>.</p></div>
+                <div><h4>Cómo se usa</h4><p><code>GET /api/tablero</code> agrupa por día y por forma de pago, y completa los días faltantes en JavaScript con cero. Solo cuenta facturas <code>emitida</code>. El cliente dibuja tres gráficos con <code>react-chartjs-2</code> dentro de <code>Card</code> de shadcn/ui.</p></div>
               </div>
-              <p class="concept-src">En el código · <code>src/server/ventas.ts</code> · <code>src/app/(panel)/page.tsx</code></p>
+              <p class="concept-src">En el código · <code>src/server/ventas.ts</code> · <code>src/app/(panel)/page.tsx</code> · <code>src/app/(panel)/graficos.tsx</code></p>
             </article>
 
             <article class="concept" id="c-env">
@@ -2314,88 +2305,88 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </div>
         </section>
 
-        <!-- ================= 08 SERVER ACTIONS ================= -->
+        <!-- ================= 08 API Y SERVER ACTIONS ================= -->
         <section class="section" id="api">
           <div class="sec-head">
             <span class="sec-no" aria-hidden="true">08</span>
             <div>
-              <h2>Server Actions</h2>
-              <p class="sec-dek">Trece acciones, una forma de error y una regla: la acción no decide.</p>
+              <h2>API REST y Server Actions</h2>
+              <p class="sec-dek">31 endpoints y 17 acciones comparten los mismos servicios. Ningún adaptador decide.</p>
             </div>
           </div>
 
           <div class="prose">
-            <p>La aplicación no expone una API REST. Los formularios envían a <strong>Server Actions</strong>: funciones del servidor que reciben el <code>FormData</code>, validan, llaman al servicio y vuelven con un estado. El navegador nunca ejecuta una regla de negocio.</p>
-            <p>La forma se repite en todos los módulos. La acción es corta; el servicio concentra la transacción y las reglas. Así se puede probar el servicio sin pasar por la pantalla y cambiar la interfaz sin tocar la lógica.</p>
-          </div>
-
-          <figure class="code">
-            <p class="cap"><b>src/server/actions/ventas.ts</b><span>validar, delegar, revalidar y redirigir</span></p>
-<pre><code class="lang-ts" data-lang="ts"><span class="t-str">'use server'</span>
-
-<span class="t-kw">export</span> <span class="t-kw">async</span> <span class="t-kw">function</span> <span class="t-fn">confirmarVenta</span>(
-  <span class="t-var">_previo</span>: <span class="t-typ">EstadoVenta</span>,
-  <span class="t-var">formData</span>: <span class="t-typ">FormData</span>,
-): <span class="t-typ">Promise</span>&lt;<span class="t-typ">EstadoVenta</span>&gt; {
-  <span class="t-kw">const</span> <span class="t-var">sesion</span> = <span class="t-ctl">await</span> <span class="t-fn">requerirSesion</span>()
-
-  <span class="t-kw">let</span> <span class="t-var">items</span>: <span class="t-kw">unknown</span>
-  <span class="t-ctl">try</span> {
-    <span class="t-var">items</span> = <span class="t-var">JSON</span>.<span class="t-fn">parse</span>(<span class="t-fn">String</span>(<span class="t-var">formData</span>.<span class="t-kw">get</span>(<span class="t-str">'items'</span>) ?? <span class="t-str">'[]'</span>))
-  } <span class="t-ctl">catch</span> {
-    <span class="t-ctl">return</span> { <span class="t-var">error</span>: <span class="t-str">'El detalle de la venta llegó dañado. Volvé a intentar.'</span> }
-  }
-
-  <span class="t-kw">const</span> <span class="t-var">datos</span> = <span class="t-var">ventaSchema</span>.<span class="t-fn">safeParse</span>({ <span class="t-var">clienteId</span>, <span class="t-var">formaPago</span>, <span class="t-var">montoRecibido</span>, <span class="t-var">items</span> })
-  <span class="t-ctl">if</span> (!<span class="t-var">datos</span>.<span class="t-var">success</span>) <span class="t-ctl">return</span> { <span class="t-var">error</span>: <span class="t-fn">primerError</span>(<span class="t-var">datos</span>.<span class="t-var">error</span>.<span class="t-var">issues</span>) }
-
-  <span class="t-kw">const</span> <span class="t-var">factura</span> = <span class="t-ctl">await</span> <span class="t-fn">registrarVenta</span>(<span class="t-var">sesion</span>, <span class="t-var">datos</span>.<span class="t-var">data</span>)
-
-  <span class="t-fn">revalidatePath</span>(<span class="t-str">'/ventas'</span>)
-  <span class="t-fn">revalidatePath</span>(<span class="t-str">'/productos'</span>)
-  <span class="t-fn">redirect</span>(<span class="t-str">`/ventas/</span>${<span class="t-var">factura</span>.<span class="t-var">id</span>}<span class="t-str">`</span>)
-}</code></pre>
-          </figure>
-
-          <div class="prose">
-            <h3>Qué hace cada acción</h3>
-            <p>La acción nunca escribe en la base por su cuenta. Valida el formulario con Zod, llama a la función del servicio que corresponde y decide qué rutas revalidar.</p>
+            <p>El sistema expone una <strong>API REST</strong> bajo <code>/api</code> con Route Handlers de Next.js: 23 archivos <code>route.ts</code> publican 31 endpoints. El POS confirma la venta contra <code>POST /api/facturas</code> y busca productos contra <code>GET /api/productos?q=…</code>. Los formularios de administración usan Server Actions. Las dos puertas llaman a los mismos servicios.</p>
+            <p>El adaptador común vive en <code>src/server/api.ts</code>. Exige sesión, resuelve parámetros, lee el JSON, valida con Zod y traduce cualquier error al formato de la sección 11: <code>{ error: { code, message, details } }</code>. La ruta no repite reglas.</p>
           </div>
 
           <div class="tablewrap">
             <table>
-              <thead><tr><th>Acción</th><th>Archivo</th><th>Servicio</th><th>Qué hace</th></tr></thead>
+              <thead><tr><th>Módulo</th><th>Endpoints</th><th>Archivos</th></tr></thead>
               <tbody>
-                <tr><td class="model">iniciarSesion</td><td><code>actions/auth.ts</code></td><td><code>autenticar</code></td><td>Valida email y contraseña, y firma la cookie.</td></tr>
-                <tr><td class="model">cerrarSesion</td><td><code>actions/auth.ts</code></td><td>—</td><td>Borra la cookie y vuelve al login.</td></tr>
-                <tr><td class="model">guardarProducto</td><td><code>actions/productos.ts</code></td><td><code>crearProducto</code></td><td>Alta con stock inicial como entrada.</td></tr>
-                <tr><td class="model">actualizarProducto</td><td><code>actions/productos.ts</code></td><td><code>editarProducto</code></td><td>Edita catálogo y estado, sin tocar existencias.</td></tr>
-                <tr><td class="model">registrarMovimiento</td><td><code>actions/productos.ts</code></td><td><code>moverStock</code></td><td>Entrada o salida desde el detalle.</td></tr>
-                <tr><td class="model">registrarMovimientoGlobal</td><td><code>actions/productos.ts</code></td><td><code>moverStock</code></td><td>Igual, desde el historial global.</td></tr>
-                <tr><td class="model">guardarCliente</td><td><code>actions/clientes.ts</code></td><td><code>crearCliente</code></td><td>Alta de cliente.</td></tr>
-                <tr><td class="model">actualizarCliente</td><td><code>actions/clientes.ts</code></td><td><code>editarCliente</code></td><td>Edición y activación.</td></tr>
-                <tr><td class="model">crearClienteRapido</td><td><code>actions/clientes.ts</code></td><td><code>crearCliente</code></td><td>Alta desde el POS sin perder el carrito.</td></tr>
-                <tr><td class="model">registrarPagoCliente</td><td><code>actions/clientes.ts</code></td><td><code>registrarPago</code></td><td>Crédito con tope en la deuda.</td></tr>
-                <tr><td class="model">confirmarVenta</td><td><code>actions/ventas.ts</code></td><td><code>registrarVenta</code></td><td>Emite el comprobante y mueve stock y deuda.</td></tr>
-                <tr><td class="model">guardarUsuario</td><td><code>actions/usuarios.ts</code></td><td><code>crearUsuario</code></td><td>Alta con rol, solo admin.</td></tr>
-                <tr><td class="model">actualizarUsuario</td><td><code>actions/usuarios.ts</code></td><td><code>editarUsuario</code></td><td>Edición y estado, con guardas.</td></tr>
+                <tr><td class="model">Sesión y usuarios</td><td>login, logout, me, password, usuarios (GET/POST/PATCH), reset-password</td><td><code>api/auth/</code>, <code>api/usuarios/</code></td></tr>
+                <tr><td class="model">Categorías y productos</td><td>categorías (GET/POST/PATCH), productos (GET/POST/PATCH), ficha, movimientos</td><td><code>api/categorias/</code>, <code>api/productos/</code></td></tr>
+                <tr><td class="model">Stock</td><td>movimientos por producto (GET/POST) e historial global</td><td><code>api/productos/[id]/movimientos/</code>, <code>api/movimientos-stock/</code></td></tr>
+                <tr><td class="model">Clientes y pagos</td><td>clientes (GET/POST/PATCH), cuenta corriente, pagos y recibo</td><td><code>api/clientes/</code>, <code>api/pagos/</code></td></tr>
+                <tr><td class="model">Facturas</td><td>listado, ficha, próximo número, emisión y anulación</td><td><code>api/facturas/</code></td></tr>
+                <tr><td class="model">Tablero</td><td>resumen completo con series y rankings</td><td><code>api/tablero/route.ts</code></td></tr>
               </tbody>
             </table>
           </div>
 
           <div class="prose">
-            <h3>Los errores no viajan como códigos</h3>
-            <p>Una acción devuelve <code>{ error }</code> o <code>{ ok }</code>, y el formulario lo muestra al lado del campo. La regla vive en el servicio: si el stock no alcanza, el servicio lanza <code>ApiError</code> con el texto que ve el usuario. La acción no traduce ni inventa mensajes.</p>
-            <p>Las páginas leen con <code>searchParams</code> y los listados filtran en SQL. No hay <code>fetch</code> interno ni estados de carga que sincronizar: el servidor renderiza el estado actual después de cada acción.</p>
+            <h3>Cómo se arma una ruta</h3>
+            <p>Todas usan el mismo envoltorio. La ruta declara si es pública o si exige administrador, lee el cuerpo con el esquema de <code>src/lib/api-schemas.ts</code> y llama al servicio. Los errores de Zod se convierten en <code>422 VALIDACION</code> con <code>details</code> por campo; un error inesperado se registra y responde <code>500 ERROR_INTERNO</code> sin filtrar el stack.</p>
+          </div>
+
+          <figure class="code">
+            <p class="cap"><b>src/app/api/productos/route.ts</b><span>la ruta no decide: valida y delega</span></p>
+<pre><code class="lang-ts" data-lang="ts">export async function POST(req: NextRequest) {
+  return manejar(req, {}, async ({ req, sesion }) =&gt; {
+    const datos = await cuerpo(req, productoApiSchema)
+    const creado = await crearProducto(sesion, {
+      ...datos,
+      stockInicial: datos.stockInicial ?? 0,
+    })
+    return json(creado, 201)
+  }, { admin: true })
+}</code></pre>
+          </figure>
+
+          <div class="prose">
+            <h3>Las Server Actions no son la API</h3>
+            <p>Una acción recibe <code>FormData</code>, devuelve <code>{ error }</code> o <code>{ ok }</code> y revalida la pantalla. No hay reglas duplicadas: si una validación o una transacción aparece en dos adaptadores, se mueve al servicio. Son 17 acciones; las principales:</p>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Acción</th><th>Servicio</th><th>Qué hace</th></tr></thead>
+              <tbody>
+                <tr><td class="model">iniciarSesion / cerrarSesion</td><td><code>autenticar</code></td><td>Firma o borra la cookie httpOnly.</td></tr>
+                <tr><td class="model">cambiarContrasena</td><td><code>cambiarPassword</code></td><td>Verifica la actual y guarda el hash nuevo.</td></tr>
+                <tr><td class="model">guardarProducto / actualizarProducto</td><td><code>crearProducto</code> / <code>editarProducto</code></td><td>Catálogo, sin tocar existencias por edición.</td></tr>
+                <tr><td class="model">registrarMovimiento</td><td><code>moverStock</code></td><td>Entrada o salida con movimiento auditado.</td></tr>
+                <tr><td class="model">guardarCategoria / alternarCategoria</td><td><code>crearCategoria</code> / <code>editarCategoria</code></td><td>Alta y activación de categorías.</td></tr>
+                <tr><td class="model">guardarCliente / actualizarCliente</td><td><code>crearCliente</code> / <code>editarCliente</code></td><td>Alta, edición y baja con saldo pendiente.</td></tr>
+                <tr><td class="model">registrarPagoCliente</td><td><code>registrarPago</code></td><td>Recibo y crédito en una transacción.</td></tr>
+                <tr><td class="model">confirmarVenta / anularFactura</td><td><code>registrarVenta</code> / <code>anularVenta</code></td><td>Emisión y reverso completo.</td></tr>
+                <tr><td class="model">guardarUsuario / actualizarUsuario</td><td><code>crearUsuario</code> / <code>editarUsuario</code></td><td>ABM con guardas de rol.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="prose">
+            <h3>Tres barreras para la sesión</h3>
+            <p><strong>Proxy.</strong> <code>src/proxy.ts</code> redirige a <code>/login</code> si falta la cookie. <strong>Layout.</strong> El panel vuelve a leer el usuario de la base en cada pedido; un usuario desactivado pierde el acceso aunque conserve la cookie. <strong>Servicio.</strong> Cada operación de administración llama a <code>exigirAdmin()</code>, y la API responde <code>403 SIN_PERMISO</code> aunque se llame con <code>curl</code>.</p>
           </div>
 
           <div class="note">
-            <b>Por qué no hay /api</b>
-            <p>El enunciado pide una aplicación web, no una API pública. Server Actions evita duplicar el contrato: el mismo formulario que valida en el cliente llama a la función que valida en el servidor. Si mañana hace falta una API, los servicios ya están separados y se expone una capa fina encima.</p>
+            <b>Por qué las dos puertas</b>
+            <p>El enunciado exige REST con Route Handlers (secciones 9 y 11). La interfaz usa Server Actions para formularios con estado y la API para el POS, la búsqueda en vivo y cualquier cliente externo. Las dos llaman a los mismos servicios; ninguna regla vive en el adaptador.</p>
           </div>
         </section>
 
-        <!-- ================= 08 DEFENSA ================= -->
+        <!-- ================= 09 DEFENSA ================= -->
         <section class="section" id="defensa">
           <div class="sec-head">
             <span class="sec-no" aria-hidden="true">09</span>
@@ -2498,7 +2489,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <div class="qa-body">
               <p><strong>Respuesta corta.</strong> La existencia se guarda en <code>productos.existencia</code> y solo cambia en <code>moverStock()</code>. El saldo se calcula: débitos menos créditos de <code>movimientos_cuenta</code>.</p>
               <p><strong>Por qué la diferencia.</strong> La existencia necesita una condición atómica en el <code>UPDATE</code> para resolver dos ventas simultáneas. El saldo no necesita bloqueo y, si se guardara, habría que actualizarlo en tres operaciones distintas; derivarlo evita la desincronización.</p>
-              <p><strong>Mostralo.</strong> <code>src/server/productos.ts</code> y <code>src/server/clientes.ts</code>. Después corré <code>scripts/verificar.ts</code>: la suma de movimientos tiene que dar la existencia.</p>
+              <p><strong>Mostralo.</strong> <code>src/server/productos.ts</code> y <code>src/server/clientes.ts</code>. Después corré las consultas de verificación de la sección 04: la suma de movimientos tiene que dar la existencia.</p>
               <p class="qa-trap"><b>Si te repreguntan</b>El saldo se puede cachear por rendimiento, pero la fuente de verdad siguen siendo los movimientos. Si se cachea, se invalida en la misma transacción.</p>
             </div>
           </details>
@@ -2568,9 +2559,9 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <details class="qa" id="q-a04">
             <summary><span class="q-no">A04</span>¿Qué pasa si un vendedor intenta administrar usuarios? Mostralo.</summary>
             <div class="qa-body">
-              <p><strong>Respuesta corta.</strong> La acción <code>actualizarUsuario</code> llama a <code>requerirAdmin()</code>; como el rol no es <code>admin</code>, redirige a <code>/</code> y no toca la base. La sección ni siquiera aparece en la barra lateral.</p>
+              <p><strong>Respuesta corta.</strong> En la interfaz, la acción <code>actualizarUsuario</code> llama a <code>requerirAdmin()</code> y redirige a <code>/</code>. En la API, <code>PATCH /api/usuarios/{id}</code> pasa por <code>exigirAdmin()</code> y responde <code>403 SIN_PERMISO</code>. La sección ni siquiera aparece en la barra lateral.</p>
               <p><strong>Qué mirar.</strong> Entrar con <code>vendedor@comercial.test</code>, abrir <code>/usuarios</code> a mano y ver la redirección al tablero. Después, desde la consola del navegador, invocar la acción no cambia nada: el servidor vuelve a decidir.</p>
-              <p class="qa-trap"><b>Si te repreguntan</b>Es una redirección, no un <code>403</code>, porque el sistema es una aplicación web con Server Actions y no una API pública.</p>
+              <p class="qa-trap"><b>Si te repreguntan</b>La UI redirige; la API responde <code>403 SIN_PERMISO</code>. Probralo con la cookie del vendedor contra <code>/api/usuarios</code>. Ocultar el botón es solo comodidad.</p>
             </div>
           </details>
 
@@ -2578,7 +2569,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <summary><span class="q-no">A05</span>¿Dónde se arma el mensaje de error que ve el usuario?</summary>
             <div class="qa-body">
               <p><strong>Respuesta corta.</strong> En el servicio, con <code>ApiError</code>. La acción solo lo convierte a <code>{ error: error.message }</code>; los errores inesperados se relanzan y quedan en el log del servidor.</p>
-              <p><strong>La forma.</strong> No hay un JSON estándar: el formulario recibe un texto y lo muestra junto al campo. Los errores de Zod se reducen al primer mensaje con <code>primerError()</code>.</p>
+              <p><strong>La forma.</strong> En la API el error viaja como <code>{ error: { code, message, details } }</code>. En un formulario, la acción devuelve <code>{ error }</code> y el texto se muestra junto al campo. Los errores de Zod se reducen al primer mensaje con <code>primerError()</code>.</p>
               <p class="qa-trap"><b>Si te repreguntan</b>El stack y el SQL nunca llegan al navegador. El mensaje es corto y accionable: «No hay stock suficiente. Quedan N unidades.»</p>
             </div>
           </details>
@@ -2722,9 +2713,9 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <details class="qa" id="q-r09">
             <summary><span class="q-no">R09</span>¿Qué hace el sistema cuando se anula una factura?</summary>
             <div class="qa-body">
-              <p><strong>Respuesta corta.</strong> No se anula. El enunciado de este parcial excluye expresamente la anulación y la edición de ventas y pagos confirmados: los comprobantes y movimientos se conservan como historial.</p>
-              <p><strong>Si se agregara.</strong> Sería un reverso completo y en una transacción: marcar la factura como <code>anulada</code>, reingresar el stock con un movimiento por renglón y, si fue a cuenta corriente, grabar un crédito por el total. La factura no se borraría y el número no se reutilizaría.</p>
-              <p><strong>Mostralo.</strong> El estado <code>emitida</code> en <code>facturas</code> y la ausencia de una acción de anulación en <code>src/server/actions/ventas.ts</code>.</p>
+              <p><strong>Respuesta corta.</strong> La marca como <code>anulada</code>, reingresa el stock de cada renglón con un movimiento de tipo <code>anulacion</code> y, si fue en cuenta corriente, graba un crédito por el total. La factura no se borra y el número no se reutiliza.</p>
+              <p><strong>Dónde vive.</strong> En <code>anularVenta()</code>, <code>src/server/ventas.ts</code>. Todo ocurre en una transacción; el rol se verifica con <code>exigirAdmin()</code>. La ruta es <code>POST /api/facturas/{id}/anulacion</code> y la acción es <code>anularFactura</code>.</p>
+              <p><strong>Mostralo.</strong> Anulá una factura desde el comprobante. Después mirá el estado, el motivo, el stock reingresado y el crédito en la cuenta del cliente. Una segunda anulación devuelve <code>409 FACTURA_ANULADA</code>.</p>
             </div>
           </details>
 
@@ -2733,7 +2724,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <div class="qa-body">
               <p><strong>Respuesta corta.</strong> En <code>movimientos_stock</code>. Cada llamada a <code>moverStock()</code> graba tipo, cantidad con signo, existencia resultante, motivo, usuario, fecha y la factura cuando corresponde.</p>
               <p><strong>Qué lo garantiza.</strong> Que ninguna otra función toca <code>productos.existencia</code>. Si se actualizara por un lado y se moviera por otro, la suma no daría.</p>
-              <p><strong>Mostralo.</strong> La ficha del producto y <code>GET /api/productos/{id}/movimientos</code>. Después corré <code>scripts/verificar.ts</code>: la suma de cantidades tiene que dar la existencia.</p>
+              <p><strong>Mostralo.</strong> La ficha del producto y <code>GET /api/productos/{id}/movimientos</code>. Después corré las consultas de verificación de la sección 04: la suma de cantidades tiene que dar la existencia.</p>
             </div>
           </details>
 
@@ -2817,7 +2808,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <details class="qa" id="q-i02">
             <summary><span class="q-no">I02</span>¿Dónde se da formato a los importes y a las fechas?</summary>
             <div class="qa-body">
-              <p><strong>Respuesta corta.</strong> En <code>src/lib/formatos.ts</code>: <code>formatearMoneda</code>, <code>formatearFecha</code>, <code>formatearFechaHora</code>, <code>formatearDocumento</code> y <code>formatearNumero</code>.</p>
+              <p><strong>Respuesta corta.</strong> En <code>src/lib/dinero.ts</code> está <code>formatearPesos</code> y la conversión a centavos; en <code>src/lib/fechas.ts</code>, las fechas de Argentina. Todo listado usa esas funciones.</p>
               <p><strong>Por qué un módulo único.</strong> Para que la moneda sea <code>$ 12.345,50</code> en el listado, el comprobante y el recibo. Si cada componente formatea, tarde o temprano uno muestra otra cosa.</p>
               <p><strong>Cómo se usa.</strong> <code>Intl.NumberFormat("es-AR", …)</code> y <code>Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })</code>. Los componentes no llaman a <code>Intl</code> por su cuenta.</p>
             </div>
@@ -2865,7 +2856,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <summary><span class="q-no">I05</span>¿Qué muestra un listado mientras carga, cuando está vacío o cuando falla?</summary>
             <div class="qa-body">
               <p><strong>Respuesta corta.</strong> Cargando: un esqueleto con la forma de la tabla. Vacío: un mensaje claro y, si corresponde, un botón para crear el primer registro. Error: un mensaje con la opción de reintentar.</p>
-              <p><strong>Dónde se ve.</strong> <code>loading.tsx</code> o <code>Suspense</code> para la carga; <code>EmptyState</code> y <code>ErrorState</code> en <code>src/components/estados.tsx</code>; un <em>toast</em> para confirmar una mutación.</p>
+              <p><strong>Dónde se ve.</strong> Los listados vacíos muestran un texto y un enlace; los errores de formulario, un <code>role="alert"</code> junto al campo. No hay componentes de estado separados ni toasts.</p>
               <p class="qa-trap"><b>Si te repreguntan</b>Un listado vacío no es un error. “No hay facturas en este rango” es distinto de “no se pudo conectar”. La interfaz tiene que distinguirlos.</p>
             </div>
           </details>
@@ -2953,7 +2944,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </details>
         </section>
 
-        <!-- ================= 09 CAMBIOS ================= -->
+        <!-- ================= 10 CAMBIOS ================= -->
         <section class="section" id="cambios">
           <div class="sec-head">
             <span class="sec-no" aria-hidden="true">10</span>
@@ -2970,7 +2961,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <div class="change">
             <div class="change-head"><span class="change-no">C01</span><h3>Agregar «marca» a los productos y mostrarla en el catálogo</h3></div>
             <p>Es el cambio de “agregar un campo”. Toca la base, el esquema, la validación, el formulario y la tabla.</p>
-            <div class="files"><span class="file">src/db/schema.ts</span><span class="file">drizzle/000X_*.sql</span><span class="file">src/lib/validation.ts</span><span class="file">producto-form.tsx</span><span class="file">productos/page.tsx</span><span class="file">src/db/seed.ts</span></div>
+            <div class="files"><span class="file">src/db/schema.ts</span><span class="file">drizzle/000X_*.sql</span><span class="file">src/lib/validation.ts</span><span class="file">src/app/(panel)/productos/form.tsx</span><span class="file">src/app/(panel)/productos/page.tsx</span><span class="file">src/db/seed.ts</span></div>
             <ol>
               <li>En <code>productos</code>, agregá <code>marca: text("marca")</code>. Dejala nullable o con <code>.default("")</code>: si la ponés <code>notNull</code> sin default, la migración falla con las filas existentes.</li>
               <li>Corré <code>pnpm db:generate</code>. Revisá que el SQL sea <code>ALTER TABLE productos ADD COLUMN marca text;</code>.</li>
@@ -2993,7 +2984,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <div class="change">
             <div class="change-head"><span class="change-no">C02</span><h3>Agregar «Mercado Pago» como medio de pago de la cuenta corriente</h3></div>
             <p>Es el cambio de “agregar una opción a un enum”. No toca la lógica de saldo, solo el medio aceptado.</p>
-            <div class="files"><span class="file">src/db/schema.ts</span><span class="file">src/lib/validation.ts</span><span class="file">pago-form.tsx</span><span class="file">recibo/page.tsx</span></div>
+            <div class="files"><span class="file">src/db/schema.ts</span><span class="file">src/lib/validation.ts</span><span class="file">src/app/(panel)/clientes/[id]/pago-form.tsx</span><span class="file">src/app/(panel)/clientes/[id]/page.tsx</span></div>
             <ol>
               <li>Agregá <code>"mercado_pago"</code> al enum de <code>medio</code> en el esquema y al <code>z.enum</code> de la validación.</li>
               <li>Si definiste un <code>CHECK</code> en la base, generá una migración. Si usás el enum solo de TypeScript, no hace falta migración: SQLite guarda texto.</li>
@@ -3001,7 +2992,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <li>Agregá la etiqueta “Mercado Pago” al recibo y a la lista de medios.</li>
             </ol>
             <figure class="code">
-              <p class="cap"><b>validaciones.ts</b><span>un valor más</span></p>
+              <p class="cap"><b>validation.ts</b><span>un valor más</span></p>
               <pre><code class="lang-ts" data-lang="ts"><span class="t-kw">export</span> <span class="t-kw">const</span> <span class="t-var">pagoSchema</span> = <span class="t-var">z</span>.<span class="t-kw">object</span>({
   <span class="t-var">importe</span>: <span class="t-var">z</span>.<span class="t-kw">number</span>().<span class="t-fn">int</span>().<span class="t-fn">positive</span>(),
   <span class="t-var">medio</span>: <span class="t-var">z</span>.<span class="t-kw">enum</span>([<span class="t-str">"efectivo"</span>, <span class="t-str">"transferencia"</span>, <span class="t-str">"tarjeta_debito"</span>, <span class="t-str">"mercado_pago"</span>]),
@@ -3022,7 +3013,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <li>En el servicio, después de armar las líneas, recorré y lanzá <code>VALIDACION</code> con <code>details</code> si alguna supera 50.</li>
             </ol>
             <figure class="code">
-              <p class="cap"><b>validaciones.ts</b><span>el límite en el esquema</span></p>
+              <p class="cap"><b>validation.ts</b><span>el límite en el esquema</span></p>
               <pre><code class="lang-ts" data-lang="ts"><span class="t-kw">const</span> <span class="t-var">itemSchema</span> = <span class="t-var">z</span>.<span class="t-kw">object</span>({
   <span class="t-var">productoId</span>: <span class="t-var">z</span>.<span class="t-kw">number</span>().<span class="t-fn">int</span>().<span class="t-fn">positive</span>(),
   <span class="t-var">cantidad</span>: <span class="t-var">z</span>.<span class="t-kw">number</span>().<span class="t-fn">int</span>().<span class="t-fn">positive</span>().<span class="t-fn">max</span>(<span class="t-num">50</span>, <span class="t-str">"Máximo 50 unidades por producto."</span>),
@@ -3042,7 +3033,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
               <li>Usá el mismo esquema en el formulario y en el servicio. No escribas la regla dos veces.</li>
             </ol>
             <figure class="code">
-              <p class="cap"><b>validaciones.ts</b><span>normalizar y después validar</span></p>
+              <p class="cap"><b>validation.ts</b><span>normalizar y después validar</span></p>
               <pre><code class="lang-ts" data-lang="ts"><span class="t-var">telefono</span>: <span class="t-var">z</span>.<span class="t-kw">string</span>()
   .<span class="t-fn">transform</span>((<span class="t-var">s</span>) =&gt; <span class="t-var">s</span>.<span class="t-fn">replace</span>(<span class="t-str">/\D/g</span>, <span class="t-str">""</span>))
   .<span class="t-fn">refine</span>((<span class="t-var">s</span>) =&gt; <span class="t-var">s</span>.<span class="t-var">length</span> &gt;= <span class="t-num">8</span>, <span class="t-str">"El teléfono debe tener al menos 8 dígitos."</span>),</code></pre>
@@ -3143,7 +3134,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 <tr><td class="num">4–6</td><td>Alta de cliente y venta a cuenta corriente</td><td>Cliente creado sin perder la venta, saldo nuevo y límite.</td></tr>
                 <tr><td class="num">6–7</td><td>Pago de la cuenta</td><td>Recibo numerado y saldo actualizado.</td></tr>
                 <tr><td class="num">7–9</td><td>Anulación como administrador</td><td>Motivo, estado <em>Anulada</em>, stock reingresado y crédito.</td></tr>
-                <tr><td class="num">9–10</td><td>Permiso y consistencia</td><td><code>403</code> con el vendedor y <code>verificar.ts</code> sin descuadres.</td></tr>
+                <tr><td class="num">9–10</td><td>Permiso y consistencia</td><td><code>403</code> con el vendedor y las tres consultas de verificación sin filas.</td></tr>
               </tbody>
             </table>
           </div>
@@ -3170,7 +3161,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 <span class="t-com"># Login del vendedor y guardar la cookie</span>
 <span class="t-fn">curl</span> <span class="t-var">-i</span> <span class="t-var">-c</span> cookies.txt <span class="t-var">-X</span> POST http://localhost:3000/api/auth/login \
   <span class="t-var">-H</span> <span class="t-str">"Content-Type: application/json"</span> \
-  <span class="t-var">-d</span> <span class="t-str">'{"email":"vendedor@ferreteria.test","password":"Vendedor123"}'</span>
+  <span class="t-var">-d</span> <span class="t-str">'{"email":"vendedor@comercial.test","password":"vendedor1234"}'</span>
 
 <span class="t-com"># Ruta de administrador: 403</span>
 <span class="t-fn">curl</span> <span class="t-var">-i</span> <span class="t-var">-b</span> cookies.txt <span class="t-var">-X</span> POST http://localhost:3000/api/productos \
@@ -3184,7 +3175,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </figure>
 
           <figure class="code">
-            <p class="cap"><b>scripts/probar-concurrencia.ts</b><span>dos ventas de la última unidad</span></p>
+            <p class="cap"><b>Prueba de concurrencia</b><span>dos ventas de la última unidad</span></p>
             <pre><code class="lang-ts" data-lang="ts"><span class="t-kw">const</span> <span class="t-var">BASE</span> = <span class="t-str">"http://localhost:3000"</span>;
 <span class="t-kw">const</span> <span class="t-var">COOKIE</span> = <span class="t-var">process</span>.<span class="t-var">env</span>.<span class="t-var">COOKIE</span>!;
 <span class="t-kw">const</span> <span class="t-var">PRODUCTO</span> = <span class="t-fn">Number</span>(<span class="t-var">process</span>.<span class="t-var">env</span>.<span class="t-var">PRODUCTO_ID</span>);
@@ -3211,7 +3202,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
           <div class="note">
             <b>Cómo preparar la prueba</b>
-            <p>Dejá un producto con existencia 1, anotá su <code>id</code> y usá la cookie de un vendedor o administrador. Antes de correr el script, mirá la existencia y la cantidad de facturas. Después, verificá que la existencia sea 0 y que haya una sola factura nueva.</p>
+            <p>Dejá un producto con existencia 1, anotá su <code>id</code> y usá la cookie de un vendedor o administrador. Antes de disparar las dos ventas, mirá la existencia y la cantidad de facturas. Después, verificá que la existencia sea 0 y que haya una sola factura nueva.</p>
           </div>
 
           <figure class="code">
@@ -3228,9 +3219,9 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           </figure>
 
           <figure class="code">
-            <p class="cap"><b>Consistencia</b><span>el script que cierra la defensa</span></p>
-            <pre><code class="lang-bash" data-lang="bash"><span class="t-fn">pnpm</span> tsx scripts/verificar.ts
-<span class="t-com"># OK: stock y cuenta corriente cuadran.</span></code></pre>
+            <p class="cap"><b>Consistencia</b><span>las consultas de la sección 04</span></p>
+            <pre><code class="lang-bash" data-lang="bash"><span class="t-com">-- Pegá las tres consultas de verificación en la consola de Turso.</span>
+<span class="t-com">-- Las tres tienen que devolver 0 filas.</span></code></pre>
           </figure>
 
           <div class="prose">
@@ -3315,7 +3306,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <li class="trap">
               <div class="trap-head"><span class="trap-no">T07</span><h3>Cargar el seed con SQL crudo</h3></div>
               <p>El seed inserta facturas sin movimientos de stock o sin débito en la cuenta. El tablero muestra ventas, pero la consistencia no cierra.</p>
-              <p class="trap-data"><span class="mono">Se detecta</span><code>verificar.ts</code> devuelve descuadres después de un seed limpio. <span class="mono">Se corrige</span>El seed llama a los servicios, igual que la aplicación.</p>
+              <p class="trap-data"><span class="mono">Se detecta</span>La suma de movimientos no coincide con la existencia después de un seed limpio. <span class="mono">Se corrige</span>El seed llama a los servicios, igual que la aplicación.</p>
             </li>
             <li class="trap">
               <div class="trap-head"><span class="trap-no">T08</span><h3>Publicar al final y usar el driver equivocado</h3></div>
@@ -3704,7 +3695,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                 <tr>
                   <td class="model">Datos de prueba</td>
                   <td><span class="pill ok">Hecho</span></td>
-                  <td>Dos usuarios, tres categorías, seis productos con stock inicial, dos clientes y tres ventas de ejemplo.</td>
+                  <td>Dos usuarios, cinco categorías, treinta productos, diez clientes, cincuenta facturas en los últimos 30 días (una anulada), tres pagos y cuatro productos bajo mínimo. Las ventas y los pagos se crean con los servicios.</td>
                 </tr>
                 <tr>
                   <td class="model">Autenticación</td>
@@ -3727,14 +3718,24 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
                   <td>POS con carrito, verificación de stock, pago de contado, tarjeta simulada o cuenta corriente, comprobante numerado y descuento de stock y deuda en una sola transacción.</td>
                 </tr>
                 <tr>
+                  <td class="model">Anulación</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>Reverso completo en una transacción: estado <code>anulada</code>, stock reingresado, crédito en cuenta corriente y motivo auditado. Solo administrador.</td>
+                </tr>
+                <tr>
+                  <td class="model">API REST</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>31 endpoints bajo <code>/api</code> en 23 archivos <code>route.ts</code>, con esquemas Zod estrictos, códigos de error del enunciado y permisos verificados en el servidor.</td>
+                </tr>
+                <tr>
                   <td class="model">Usuarios</td>
                   <td><span class="pill ok">Hecho</span></td>
-                  <td>Listado, alta, edición y activación. Solo el administrador entra; no puede desactivar su propia cuenta ni el último administrador activo.</td>
+                  <td>Listado, alta, edición y activación. Solo el administrador entra; no puede desactivar su propia cuenta ni el último administrador activo. Cada usuario cambia su contraseña en <code>/perfil</code>.</td>
                 </tr>
                 <tr>
                   <td class="model">Tablero</td>
                   <td><span class="pill ok">Hecho</span></td>
-                  <td>Ventas del día y del mes, deuda total, productos bajo mínimo, últimas ventas y accesos directos.</td>
+                  <td>Ventas del día y del mes, deuda total, productos bajo mínimo, últimas ventas y tres gráficos de Chart.js: serie de 30 días, formas de pago y más vendidos.</td>
                 </tr>
                 <tr>
                   <td class="model">Publicación</td>
@@ -3750,178 +3751,374 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <p><strong>Vender.</strong> El POS busca productos por código o descripción, arma el carrito con cantidades y subtotales, y muestra el total. El pago puede ser de contado con vuelto calculado, con tarjeta simulada o en cuenta corriente. Si el cliente no existe, se da de alta desde el mismo panel sin perder el carrito. Al confirmar se emite un comprobante con numeración única y se copian precios y descripciones del momento de la venta.</p>
             <p><strong>Mover stock.</strong> Cada producto tiene entradas, salidas y un historial con fecha, usuario, motivo, cantidad y existencia resultante. Una salida se rechaza si no alcanza y el mensaje dice cuántas unidades quedan. El historial global filtra por producto y por tipo de movimiento.</p>
             <p><strong>Cobrar.</strong> La cuenta corriente muestra cada débito y cada crédito. Un pago se rechaza si supera la deuda, y una venta en cuenta corriente se rechaza si supera el límite de crédito del cliente. El saldo no se guarda: se calcula sumando los movimientos.</p>
-            <p><strong>Administrar usuarios.</strong> El administrador da de alta vendedores, cambia roles y activa o desactiva cuentas. El vendedor no ve la sección Usuarios: la barra lateral la oculta y el servidor la bloquea igual.</p>
-            <p><strong>Mirar el tablero.</strong> La portada resume ventas de hoy, facturación del mes, deuda total, productos bajo mínimo y las últimas ventas. Cada tarjeta enlaza al listado correspondiente.</p>
+            <p><strong>Anular.</strong> El administrador abre un comprobante, escribe el motivo y confirma. La factura pasa a <em>Anulada</em>, el stock vuelve y, si fue en cuenta corriente, la deuda se acredita. El comprobante y el número quedan. Una segunda anulación se rechaza con <code>409 FACTURA_ANULADA</code>.</p>
+            <p><strong>Administrar usuarios.</strong> El administrador da de alta vendedores, cambia roles y activa o desactiva cuentas. El vendedor no ve la sección Usuarios: la barra lateral la oculta y el servidor la bloquea igual. Cada usuario cambia su contraseña desde <em>Mi cuenta</em>.</p>
+            <p><strong>Mirar el tablero.</strong> La portada resume ventas de hoy, facturación del mes, deuda total, productos bajo mínimo y las últimas ventas. Tres gráficos de Chart.js muestran la serie de 30 días, las formas de pago y los más vendidos.</p>
           </div>
 
           <div class="prose">
-            <h3>Las cuatro reglas que sostienen el sistema</h3>
+            <h3>Las cinco reglas que sostienen el sistema</h3>
             <p><strong>Una venta es una transacción.</strong> El comprobante, los renglones, el descuento de stock, el débito en la cuenta y el avance del contador se escriben juntos. Si una parte falla, no queda nada y el número no se consume.</p>
             <p><strong>La condición de stock vive en la base.</strong> El descuento se ejecuta con <code>existencia &gt;= cantidad</code> dentro del <code>WHERE</code>. Si no alcanza, el <code>UPDATE</code> no toca ninguna fila y el servicio responde 422. No hay una lectura previa que pueda quedar vieja entre dos ventas simultáneas.</p>
             <p><strong>El saldo se calcula.</strong> <code>movimientos_cuenta</code> guarda débitos y créditos; el saldo es la suma. Un pago no se asigna a una factura: baja el saldo global y se rechaza si deja la cuenta en negativo.</p>
-            <p><strong>El rol se verifica en el servidor.</strong> Ocultar «Usuarios» en la barra es comodidad, no seguridad. Cada acción de administración vuelve a pedir <code>requerirAdmin</code> antes de tocar la base.</p>
+            <p><strong>El rol se verifica en el servidor.</strong> Ocultar «Usuarios» en la barra es comodidad, no seguridad. Cada acción de administración vuelve a pedir <code>requerirAdmin</code> antes de tocar la base, y la API responde <code>403 SIN_PERMISO</code>.</p>
+            <p><strong>La anulación es un reverso, no un borrado.</strong> La factura queda con estado <code>anulada</code>; el stock vuelve y la deuda se acredita en la misma transacción. El número no se reutiliza.</p>
           </div>
 
           <div class="prose">
             <h3>Los archivos que existen</h3>
-            <p>El árbol real, ordenado como en el explorador: primero las carpetas, después los archivos, y en cada nivel por orden alfabético. Cuarenta y siete archivos de código, 5.447 líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
+            <p>El árbol real, ordenado como en el explorador: primero las carpetas, después los archivos, y en cada nivel por orden alfabético. 91 archivos de código, 9.773 líneas. Cada uno tiene una responsabilidad y un tamaño que se revisa de una sentada.</p>
           </div>
 
           <div class="explorer">
-            <div class="explorer-bar"><b>src/</b><span>47 archivos · 5.447 líneas</span></div>
+            <div class="explorer-bar"><b>src/</b><span>91 archivos · 9.773 líneas</span></div>
             <ul class="tree">
               <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">app/</span><span class="count">29</span><span class="desc">rutas y pantallas (App Router)</span></div>
+                <div class="row"><span class="tw">▾</span><span class="name">app/</span><span class="count">58</span><span class="desc">rutas y pantallas (App Router)</span></div>
                 <ul>
                   <li class="dir">
-                    <div class="row"><span class="tw">▾</span><span class="name">(panel)/</span><span class="count">25</span><span class="desc">área con sesión</span></div>
+                    <div class="row"><span class="tw">▾</span><span class="name">(panel)/</span><span class="count">31</span><span class="desc">área con sesión</span></div>
                     <ul>
                       <li class="dir">
-                        <div class="row"><span class="tw">▾</span><span class="name">clientes/</span><span class="count">5</span><span class="desc">listado, alta y cuenta corriente</span></div>
+                        <div class="row"><span class="tw">▾</span><span class="name">clientes/</span><span class="count">5</span><span class="desc">clientes y cuenta corriente</span></div>
                         <ul>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">detalle y pagos</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">201</span><span class="desc">Datos, saldo, historial y pagos</span></div></li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">pago-form.tsx</span><span class="lines">93</span><span class="desc">Pago con tope en la deuda</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">214</span><span class="desc">ficha, cuenta y pagos</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">pago-form.tsx</span><span class="lines">108</span><span class="desc">registro de pagos</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta de cliente</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">26</span><span class="desc">Pantalla de alta</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">30</span><span class="desc">alta de cliente</span></div></li>
                             </ul>
                           </li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">182</span><span class="desc">Alta y edición con contacto</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">194</span><span class="desc">Listado, búsqueda y saldo</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">203</span><span class="desc">alta y edición de cliente</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">204</span><span class="desc">listado de clientes y saldos</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
-                        <div class="row"><span class="tw">▾</span><span class="name">productos/</span><span class="count">8</span><span class="desc">catálogo y stock</span></div>
+                        <div class="row"><span class="tw">▾</span><span class="name">perfil/</span><span class="count">2</span><span class="desc">cuenta del usuario</span></div>
+                        <ul>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">72</span><span class="desc">cambio de contraseña</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">31</span><span class="desc">mi cuenta</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">productos/</span><span class="count">10</span><span class="desc">catálogo y stock</span></div>
                         <ul>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">detalle y movimientos</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">196</span><span class="desc">Detalle, edición e historial</span></div></li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">movimiento-form.tsx</span><span class="lines">108</span><span class="desc">Entrada o salida de stock</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">movimiento-form.tsx</span><span class="lines">123</span><span class="desc">entrada o salida de stock</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">217</span><span class="desc">detalle, edición e historial</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">movimientos/</span><span class="count">2</span><span class="desc">historial global</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">categorias/</span><span class="count">2</span><span class="desc">categorías del catálogo</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">91</span><span class="desc">alta y estado de categoría</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">35</span><span class="desc">administración de categorías</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">movimientos/</span><span class="count">3</span><span class="desc">historial de stock</span></div>
                             <ul>
                               <li class="dir">
-                                <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">registro manual</span></div>
+                                <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">2</span><span class="desc">alta</span></div>
                                 <ul>
-                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">123</span><span class="desc">Movimiento con selector de producto</span></div></li>
-                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">28</span><span class="desc">Pantalla de registro</span></div></li>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">137</span><span class="desc">movimiento con selector</span></div></li>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">34</span><span class="desc">registro manual de stock</span></div></li>
                                 </ul>
                               </li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">233</span><span class="desc">Historial con búsqueda y filtros</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">251</span><span class="desc">historial global de stock</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta de producto</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">28</span><span class="desc">Pantalla de alta</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">33</span><span class="desc">alta de producto</span></div></li>
                             </ul>
                           </li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">167</span><span class="desc">Alta y edición del catálogo</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">216</span><span class="desc">Catálogo, existencias y estado</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">186</span><span class="desc">alta y edición de producto</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">241</span><span class="desc">catálogo, precios y stock</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
                         <div class="row"><span class="tw">▾</span><span class="name">usuarios/</span><span class="count">4</span><span class="desc">administración, solo admin</span></div>
                         <ul>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">1</span><span class="desc">edición y estado</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">1</span><span class="desc">recurso por id</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">44</span><span class="desc">Detalle y edición del usuario</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">52</span><span class="desc">edición de usuario</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta de usuario</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">nuevo/</span><span class="count">1</span><span class="desc">alta</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">27</span><span class="desc">Pantalla de alta</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">32</span><span class="desc">alta de usuario</span></div></li>
                             </ul>
                           </li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">129</span><span class="desc">Alta y edición con rol</span></div></li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">122</span><span class="desc">Listado de cuentas</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">146</span><span class="desc">alta y edición de usuario</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">130</span><span class="desc">listado de usuarios</span></div></li>
                         </ul>
                       </li>
                       <li class="dir">
-                        <div class="row"><span class="tw">▾</span><span class="name">ventas/</span><span class="count">5</span><span class="desc">POS, historial y comprobante</span></div>
+                        <div class="row"><span class="tw">▾</span><span class="name">ventas/</span><span class="count">6</span><span class="desc">carpeta del proyecto</span></div>
                         <ul>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">1</span><span class="desc">comprobante</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">150</span><span class="desc">Renglones, totales y pago</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">anulacion-form.tsx</span><span class="lines">61</span><span class="desc">confirmación de anulación</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">202</span><span class="desc">comprobante y anulación</span></div></li>
                             </ul>
                           </li>
                           <li class="dir">
-                            <div class="row"><span class="tw">▾</span><span class="name">nueva/</span><span class="count">3</span><span class="desc">punto de venta</span></div>
+                            <div class="row"><span class="tw">▾</span><span class="name">nueva/</span><span class="count">3</span><span class="desc">carpeta del proyecto</span></div>
                             <ul>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">nuevo-cliente.tsx</span><span class="lines">101</span><span class="desc">Alta rápida sin perder el carrito</span></div></li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">29</span><span class="desc">Carga catálogo y clientes</span></div></li>
-                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">pos.tsx</span><span class="lines">414</span><span class="desc">Carrito, pago y confirmación</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">nuevo-cliente.tsx</span><span class="lines">116</span><span class="desc">alta rápida desde el POS</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">38</span><span class="desc">punto de venta</span></div></li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">pos.tsx</span><span class="lines">574</span><span class="desc">POS: carrito, pago y API</span></div></li>
                             </ul>
                           </li>
-                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">178</span><span class="desc">Historial y resumen del día</span></div></li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">204</span><span class="desc">listado de comprobantes</span></div></li>
                         </ul>
                       </li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">layout.tsx</span><span class="lines">51</span><span class="desc">Barrera de sesión y barra lateral</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">nav.tsx</span><span class="lines">38</span><span class="desc">Navegación filtrada por rol</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">168</span><span class="desc">Tablero: ventas, deuda y stock</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">graficos.tsx</span><span class="lines">227</span><span class="desc">gráficos Chart.js del tablero</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">layout.tsx</span><span class="lines">58</span><span class="desc">panel con navegación y sesión</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">nav.tsx</span><span class="lines">45</span><span class="desc">navegación lateral</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">193</span><span class="desc">tablero, gráficos y alertas</span></div></li>
                     </ul>
                   </li>
                   <li class="dir">
-                    <div class="row"><span class="tw">▾</span><span class="name">login/</span><span class="count">2</span><span class="desc">ingreso</span></div>
+                    <div class="row"><span class="tw">▾</span><span class="name">api/</span><span class="count">23</span><span class="desc">API REST con Route Handlers</span></div>
                     <ul>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">52</span><span class="desc">Email y contraseña</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">26</span><span class="desc">Redirige si ya hay sesión</span></div></li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">auth/</span><span class="count">4</span><span class="desc">sesión y contraseña</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">login/</span><span class="count">1</span><span class="desc">ingreso público</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">27</span><span class="desc">POST: login y cookie httpOnly</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">logout/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">11</span><span class="desc">POST: cierra la sesión</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">me/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">16</span><span class="desc">GET: usuario conectado</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">password/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">13</span><span class="desc">PUT: cambio de contraseña</span></div></li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">categorias/</span><span class="count">2</span><span class="desc">categorías del catálogo</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">1</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">14</span><span class="desc">PATCH: nombre o estado (admin)</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">17</span><span class="desc">GET lista / POST alta (admin)</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">clientes/</span><span class="count">4</span><span class="desc">clientes y cuenta corriente</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">3</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="dir">
+                                <div class="row"><span class="tw">▾</span><span class="name">cuenta/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                                <ul>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">17</span><span class="desc">GET cuenta corriente</span></div></li>
+                                </ul>
+                              </li>
+                              <li class="dir">
+                                <div class="row"><span class="tw">▾</span><span class="name">pagos/</span><span class="count">1</span><span class="desc">recibos de pago</span></div>
+                                <ul>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">18</span><span class="desc">POST: recibo y crédito</span></div></li>
+                                </ul>
+                              </li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">37</span><span class="desc">GET ficha / PATCH edición</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">47</span><span class="desc">GET lista / POST alta</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">facturas/</span><span class="count">4</span><span class="desc">comprobantes y anulación</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="dir">
+                                <div class="row"><span class="tw">▾</span><span class="name">anulacion/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                                <ul>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">13</span><span class="desc">POST: anular (admin)</span></div></li>
+                                </ul>
+                              </li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">11</span><span class="desc">GET comprobante</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">proximo-numero/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">8</span><span class="desc">GET próximo número</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">49</span><span class="desc">GET listado / POST emisión</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">movimientos-stock/</span><span class="count">1</span><span class="desc">historial global</span></div>
+                        <ul>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">25</span><span class="desc">GET historial global</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">pagos/</span><span class="count">1</span><span class="desc">recibos de pago</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">1</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">11</span><span class="desc">GET: recibo</span></div></li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">productos/</span><span class="count">3</span><span class="desc">catálogo y stock</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="dir">
+                                <div class="row"><span class="tw">▾</span><span class="name">movimientos/</span><span class="count">1</span><span class="desc">historial de stock</span></div>
+                                <ul>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">28</span><span class="desc">GET historial / POST movimiento</span></div></li>
+                                </ul>
+                              </li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">21</span><span class="desc">GET ficha / PATCH edición (admin)</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">44</span><span class="desc">GET catálogo / POST alta (admin)</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">tablero/</span><span class="count">1</span><span class="desc">resumen del tablero</span></div>
+                        <ul>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">8</span><span class="desc">GET resumen del tablero</span></div></li>
+                        </ul>
+                      </li>
+                      <li class="dir">
+                        <div class="row"><span class="tw">▾</span><span class="name">usuarios/</span><span class="count">3</span><span class="desc">administración, solo admin</span></div>
+                        <ul>
+                          <li class="dir">
+                            <div class="row"><span class="tw">▾</span><span class="name">[id]/</span><span class="count">2</span><span class="desc">recurso por id</span></div>
+                            <ul>
+                              <li class="dir">
+                                <div class="row"><span class="tw">▾</span><span class="name">reset-password/</span><span class="count">1</span><span class="desc">carpeta del proyecto</span></div>
+                                <ul>
+                                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">12</span><span class="desc">POST: clave temporal (admin)</span></div></li>
+                                </ul>
+                              </li>
+                              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">14</span><span class="desc">PATCH: edición (admin)</span></div></li>
+                            </ul>
+                          </li>
+                          <li class="entrada"><div class="row"><span class="tw"></span><span class="name">route.ts</span><span class="lines">34</span><span class="desc">GET lista / POST alta (admin)</span></div></li>
+                        </ul>
+                      </li>
                     </ul>
                   </li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">globals.css</span><span class="lines">9</span><span class="desc">Tailwind y estilos base</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">layout.tsx</span><span class="lines">14</span><span class="desc">HTML base, idioma y fuente</span></div></li>
+                  <li class="dir">
+                    <div class="row"><span class="tw">▾</span><span class="name">login/</span><span class="count">2</span><span class="desc">ingreso público</span></div>
+                    <ul>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">form.tsx</span><span class="lines">55</span><span class="desc">formulario de login</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">page.tsx</span><span class="lines">32</span><span class="desc">pantalla de ingreso</span></div></li>
+                    </ul>
+                  </li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">globals.css</span><span class="lines">136</span><span class="desc">Tailwind y tokens de shadcn</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">layout.tsx</span><span class="lines">21</span><span class="desc">layout raíz</span></div></li>
                 </ul>
               </li>
               <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">db/</span><span class="count">3</span><span class="desc">esquema y datos</span></div>
-                <ul>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">client.ts</span><span class="lines">19</span><span class="desc">Conexión única a libSQL</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">schema.ts</span><span class="lines">244</span><span class="desc">Diez tablas, índices y tipos</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">seed.ts</span><span class="lines">234</span><span class="desc">Datos de prueba y ventas</span></div></li>
-                </ul>
-              </li>
-              <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">lib/</span><span class="count">5</span><span class="desc">utilidades compartidas</span></div>
-                <ul>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">dinero.ts</span><span class="lines">35</span><span class="desc">Pesos, centavos y formato</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">errors.ts</span><span class="lines">15</span><span class="desc">ApiError para los servicios</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">fechas.ts</span><span class="lines">9</span><span class="desc">Fecha y hora de Argentina</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">formulario.ts</span><span class="lines">42</span><span class="desc">Conserva campos tras un error</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">validation.ts</span><span class="lines">200</span><span class="desc">Esquemas Zod de los módulos</span></div></li>
-                </ul>
-              </li>
-              <li class="dir">
-                <div class="row"><span class="tw">▾</span><span class="name">server/</span><span class="count">10</span><span class="desc">reglas de negocio</span></div>
+                <div class="row"><span class="tw">▾</span><span class="name">components/</span><span class="count">8</span><span class="desc">componentes de interfaz</span></div>
                 <ul>
                   <li class="dir">
-                    <div class="row"><span class="tw">▾</span><span class="name">actions/</span><span class="count">5</span><span class="desc">puente entre formularios y servicios</span></div>
+                    <div class="row"><span class="tw">▾</span><span class="name">ui/</span><span class="count">8</span><span class="desc">componentes shadcn/ui</span></div>
                     <ul>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">auth.ts</span><span class="lines">33</span><span class="desc">Entrar y cerrar sesión</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">clientes.ts</span><span class="lines">108</span><span class="desc">Clientes y pagos</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">productos.ts</span><span class="lines">96</span><span class="desc">Catálogo y stock</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">usuarios.ts</span><span class="lines">50</span><span class="desc">Administración de cuentas</span></div></li>
-                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">ventas.ts</span><span class="lines">53</span><span class="desc">Confirma la venta</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">badge.tsx</span><span class="lines">52</span><span class="desc">shadcn/ui: badge</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">button.tsx</span><span class="lines">58</span><span class="desc">shadcn/ui: button</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">card.tsx</span><span class="lines">103</span><span class="desc">shadcn/ui: card</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">input.tsx</span><span class="lines">20</span><span class="desc">shadcn/ui: input</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">label.tsx</span><span class="lines">20</span><span class="desc">shadcn/ui: label</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">select.tsx</span><span class="lines">201</span><span class="desc">shadcn/ui: select</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">table.tsx</span><span class="lines">116</span><span class="desc">shadcn/ui: table</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">textarea.tsx</span><span class="lines">18</span><span class="desc">shadcn/ui: textarea</span></div></li>
                     </ul>
                   </li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">auth.ts</span><span class="lines">73</span><span class="desc">Cookie firmada y guardas</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">clientes.ts</span><span class="lines">193</span><span class="desc">Clientes, saldo y movimientos</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">productos.ts</span><span class="lines">221</span><span class="desc">Catálogo y reglas de stock</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">usuarios.ts</span><span class="lines">123</span><span class="desc">Autenticación y ABM</span></div></li>
-                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">ventas.ts</span><span class="lines">352</span><span class="desc">Venta transaccional y tablero</span></div></li>
                 </ul>
               </li>
+              <li class="dir">
+                <div class="row"><span class="tw">▾</span><span class="name">db/</span><span class="count">3</span><span class="desc">esquema, conexión y seed</span></div>
+                <ul>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">client.ts</span><span class="lines">25</span><span class="desc">conexión local o Turso</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">schema.ts</span><span class="lines">265</span><span class="desc">tablas y tipos Drizzle</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">seed.ts</span><span class="lines">347</span><span class="desc">datos de prueba con los servicios</span></div></li>
+                </ul>
+              </li>
+              <li class="dir">
+                <div class="row"><span class="tw">▾</span><span class="name">lib/</span><span class="count">8</span><span class="desc">utilidades y validación</span></div>
+                <ul>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">api-schemas.ts</span><span class="lines">194</span><span class="desc">esquemas Zod de la API</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">dinero.ts</span><span class="lines">42</span><span class="desc">pesos, centavos y formato</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">errors.ts</span><span class="lines">16</span><span class="desc">ApiError de los servicios</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">fechas.ts</span><span class="lines">12</span><span class="desc">fecha y hora de Argentina</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">formulario.ts</span><span class="lines">53</span><span class="desc">conserva campos tras un error</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">paginacion.ts</span><span class="lines">28</span><span class="desc">paginación común</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">utils.ts</span><span class="lines">2</span><span class="desc">cn de shadcn/ui</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">validation.ts</span><span class="lines">260</span><span class="desc">esquemas Zod de formularios</span></div></li>
+                </ul>
+              </li>
+              <li class="dir">
+                <div class="row"><span class="tw">▾</span><span class="name">server/</span><span class="count">13</span><span class="desc">servicios y adaptadores</span></div>
+                <ul>
+                  <li class="dir">
+                    <div class="row"><span class="tw">▾</span><span class="name">actions/</span><span class="count">5</span><span class="desc">Server Actions</span></div>
+                    <ul>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">auth.ts</span><span class="lines">69</span><span class="desc">login, logout y contraseña</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">clientes.ts</span><span class="lines">131</span><span class="desc">clientes y pagos</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">productos.ts</span><span class="lines">166</span><span class="desc">productos, stock y categorías</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">usuarios.ts</span><span class="lines">65</span><span class="desc">administración de cuentas</span></div></li>
+                      <li class="entrada"><div class="row"><span class="tw"></span><span class="name">ventas.ts</span><span class="lines">108</span><span class="desc">venta y anulación</span></div></li>
+                    </ul>
+                  </li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">api.ts</span><span class="lines">160</span><span class="desc">adaptador común de la API</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">auth.ts</span><span class="lines">90</span><span class="desc">cookie firmada y guardas</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">categorias.ts</span><span class="lines">98</span><span class="desc">categorías del catálogo</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">clientes.ts</span><span class="lines">474</span><span class="desc">clientes, saldo y cuenta</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">permisos.ts</span><span class="lines">13</span><span class="desc">rol verificado en servicios</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">productos.ts</span><span class="lines">448</span><span class="desc">catálogo y reglas de stock</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">usuarios.ts</span><span class="lines">260</span><span class="desc">autenticación y ABM</span></div></li>
+                  <li class="entrada"><div class="row"><span class="tw"></span><span class="name">ventas.ts</span><span class="lines">811</span><span class="desc">venta transaccional, anulación y tablero</span></div></li>
+                </ul>
+              </li>
+              <li class="entrada"><div class="row"><span class="tw"></span><span class="name">proxy.ts</span><span class="lines">21</span><span class="desc">primera barrera de sesión</span></div></li>
             </ul>
           </div>
 
@@ -3939,14 +4136,14 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
 
 <span class="t-com"># admin@comercial.test / admin1234</span>
 <span class="t-com"># vendedor@comercial.test / vendedor1234</span>
-<span class="t-com"># Recorrido: /ventas/nueva · /productos · /clientes · /usuarios</span></code></pre>
+<span class="t-com"># Recorrido: /ventas/nueva · /productos · /productos/categorias · /clientes · /usuarios · /perfil</span></code></pre>
           </figure>
 
           <div class="prose">
             <h3>Qué se ve al entrar</h3>
             <p>Sin sesión, cualquier ruta del panel redirige a <code>/login</code>. El formulario acepta las credenciales de prueba y deja una cookie <code>httpOnly</code> que JavaScript no puede leer. Al entrar, el tablero muestra las ventas del día, la deuda total y los productos bajo mínimo.</p>
-            <p>«Nueva venta» abre el POS con el catálogo a la izquierda y el carrito a la derecha. Se agregan productos, se ajustan cantidades y se elige la forma de pago. Al confirmar, la pantalla del comprobante muestra el número, los renglones y el vuelto o la deuda generada.</p>
-            <p>En Productos se edita el catálogo y se mueve el stock. Una salida mayor a la existencia devuelve «No hay stock suficiente. Quedan N unidades» y no toca la base. En Clientes se ven el saldo, el historial de movimientos y el formulario de pago. En Usuarios, el administrador cambia roles y estados; el vendedor no ve la sección.</p>
+            <p>«Nueva venta» abre el POS con el catálogo a la izquierda y el carrito a la derecha. Se agregan productos, se ajustan cantidades y se elige la forma de pago. Al confirmar contra <code>POST /api/facturas</code>, la pantalla del comprobante muestra el número, los renglones y el vuelto o la deuda generada. El administrador puede anular con motivo y confirmación; el vendedor no ve ese bloque.</p>
+            <p>En Productos se edita el catálogo, se mueve el stock y se administran las categorías. Una salida mayor a la existencia devuelve «No hay stock suficiente. Quedan N unidades» y no toca la base. En Clientes se ven el saldo, el historial de movimientos y el formulario de pago. En Usuarios, el administrador cambia roles y estados; el vendedor no ve la sección. En Mi cuenta, cada usuario cambia su contraseña.</p>
             <p>En el celular las tablas se convierten en tarjetas, la barra lateral pasa a un encabezado con el usuario y el botón Salir, y el POS apila catálogo y carrito. Ninguna pantalla desborda a 390 px.</p>
           </div>
 
@@ -3965,8 +4162,8 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
   <div class="footer-inner">
     <div>
       <p class="kicker"><span>Guía de defensa</span><span class="dot" aria-hidden="true"></span><span>Programación IV</span></p>
-      <h2>El sistema se defiende con cuatro ideas, no con memoria.</h2>
-      <p>Una factura es una transacción. El stock solo cambia en una función. El saldo se calcula. El rol se verifica en el servidor. Todo lo demás es consecuencia.</p>
+      <h2>El sistema se defiende con cinco ideas, no con memoria.</h2>
+      <p>Una factura es una transacción. El stock solo cambia en una función. El saldo se calcula. El rol se verifica en el servidor. La anulación es un reverso, no un borrado. Todo lo demás es consecuencia.</p>
       <p>Esta guía se actualiza con el código. Si un nombre de archivo cambia, actualizá la referencia antes de la defensa.</p>
     </div>
     <div class="footer-meta">

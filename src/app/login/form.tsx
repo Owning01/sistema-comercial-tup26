@@ -1,6 +1,9 @@
 'use client'
 
 import { useActionState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { iniciarSesion, type EstadoLogin } from '@/server/actions/auth'
 
 const inicial: EstadoLogin = {}
@@ -11,32 +14,28 @@ export function FormularioLogin() {
   return (
     <form action={accion} className="mt-8 space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-stone-700">
-          Email
-        </label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           name="email"
           type="email"
           autoComplete="username"
           required
           defaultValue={estado.email}
-          className="mt-1.5 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+          className="mt-1.5"
           placeholder="admin@comercial.test"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-stone-700">
-          Contraseña
-        </label>
-        <input
+        <Label htmlFor="password">Contraseña</Label>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className="mt-1.5 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+          className="mt-1.5"
           placeholder="••••••••"
         />
       </div>
@@ -47,13 +46,9 @@ export function FormularioLogin() {
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pendiente}
-        className="w-full rounded-md bg-stone-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" size="lg" disabled={pendiente} className="w-full">
         {pendiente ? 'Entrando…' : 'Entrar'}
-      </button>
+      </Button>
     </form>
   )
 }

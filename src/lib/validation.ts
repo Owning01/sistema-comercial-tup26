@@ -195,11 +195,22 @@ export type EditarUsuarioForm = z.infer<typeof editarUsuarioSchema>
 
 export const pagoSchema = z.object({
   importe: precioEnPesos,
-  medio: z.enum(['efectivo', 'transferencia', 'tarjeta'], { message: 'Elegí el medio de pago.' }),
+  medio: z.enum(['efectivo', 'transferencia', 'tarjeta_debito'], {
+    message: 'Elegí el medio de pago.',
+  }),
   observacion: textoOpcional(200),
 })
 
 export type PagoForm = z.infer<typeof pagoSchema>
+
+export const tarjetaSchema = z.object({
+  tipo: z.enum(['debito', 'credito'], { message: 'Elegí débito o crédito.' }),
+  marca: z.string().trim().min(2, 'Elegí la marca de la tarjeta.').max(40),
+  ultimos4: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, 'Los últimos 4 dígitos tienen que ser exactamente 4 números.'),
+})
 
 export const ventaSchema = z
   .object({
@@ -208,6 +219,7 @@ export const ventaSchema = z
       message: 'Elegí la forma de pago.',
     }),
     montoRecibido: z.number().int().nonnegative().nullable(),
+    tarjeta: tarjetaSchema.nullable(),
     items: z
       .array(
         z.object({
@@ -224,4 +236,24 @@ export const ventaSchema = z
   )
 
 export type VentaForm = z.infer<typeof ventaSchema>
+export type TarjetaForm = z.infer<typeof tarjetaSchema>
+
+export const categoriaSchema = z.object({
+  nombre: z
+    .string()
+    .trim()
+    .min(2, 'El nombre tiene que tener al menos 2 caracteres.')
+    .max(80, 'El nombre no puede superar los 80 caracteres.'),
+})
+
+export const cambioPasswordSchema = z
+  .object({
+    actual: z.string().min(1, 'Ingresá la contraseña actual.').max(200),
+    nueva: z.string().min(8, 'La contraseña nueva necesita al menos 8 caracteres.').max(100),
+    repetir: z.string().min(8, 'Repetí la contraseña nueva.').max(100),
+  })
+  .refine((datos) => datos.nueva === datos.repetir, {
+    message: 'Las contraseñas nuevas no coinciden.',
+    path: ['repetir'],
+  })
 
