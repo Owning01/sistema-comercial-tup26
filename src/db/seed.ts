@@ -22,6 +22,20 @@ import {
 
 const PUNTO_VENTA = Number(process.env.PUNTO_VENTA ?? 1)
 
+/**
+ * El seed borra todas las filas. Si la URL es remota, se niega salvo que se
+ * pida con --forzar: nunca conviene vaciar una base de produccion por error.
+ */
+function revisarDestino() {
+  const url = process.env.DATABASE_URL ?? 'file:./local.db'
+  if (url.startsWith('libsql://') && !process.argv.includes('--forzar')) {
+    console.error('La base es remota:', url)
+    console.error('El seed borra todo. Si es lo que querés, corré: pnpm db:seed --forzar')
+    process.exit(1)
+  }
+  console.log('Sembrando en', url)
+}
+
 async function limpiar() {
   // Orden inverso a las claves foraneas.
   await db.delete(movimientosCuenta)
@@ -37,19 +51,20 @@ async function limpiar() {
 }
 
 async function main() {
+  revisarDestino()
   await limpiar()
 
   const [admin, vendedor] = await db
     .insert(usuarios)
     .values([
       {
-        nombre: 'Administrador',
+        nombre: 'Ana Pérez',
         email: 'admin@comercial.test',
         hash: await bcrypt.hash('admin1234', 10),
         rol: 'admin',
       },
       {
-        nombre: 'Vendedor Mostrador',
+        nombre: 'Bruno Díaz',
         email: 'vendedor@comercial.test',
         hash: await bcrypt.hash('vendedor1234', 10),
         rol: 'vendedor',
