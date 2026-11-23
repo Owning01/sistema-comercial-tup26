@@ -542,6 +542,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
       <a href="#ia"><span>14</span>IA</a>
       <a href="#fuentes"><span>15</span>Fuentes</a>
       <a href="#bitacora"><span>16</span>Bitácora</a>
+      <a href="#avance"><span>17</span>Avance</a>
     </nav>
 
     <div class="rail-foot">
@@ -646,7 +647,7 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
             <div><dt>Tema</dt><dd>2º parcial 2026</dd></div>
             <div><dt>Nivel</dt><dd>Intermedio</dd></div>
             <div><dt>Tiempo</dt><dd>50 min de lectura</dd></div>
-            <div><dt>Estado</dt><dd>Guía viva: se actualiza con el código</dd></div>
+            <div><dt>Estado</dt><dd>Guía viva · <a href="#avance">cómo va el sistema</a></dd></div>
           </dl>
         </header>
 
@@ -3834,6 +3835,114 @@ kbd{font-family:var(--mono);font-size:.78em;background:var(--paper-3);border:1px
           <div class="note">
             <b>Estado de la guía</b>
             <p>Verificada contra el enunciado. Los nombres de archivos y las decisiones de implementación son una propuesta, no una copia de una solución oficial. Cuando el código cambie, actualizá las referencias antes de la defensa.</p>
+          </div>
+        </section>
+        <section class="section" id="avance">
+          <div class="sec-head">
+            <span class="sec-no" aria-hidden="true">17</span>
+            <div>
+              <h2>Avance</h2>
+              <p class="sec-dek">Qué está construido hoy, archivo por archivo. Se reescribe al cerrar cada paso.</p>
+            </div>
+          </div>
+
+          <div class="prose">
+            <p><strong>Paso 1 de 9 · base y modelo de datos.</strong> Última actualización: 23/11/2026.</p>
+            <p>La aplicación arranca, migra la base y muestra una consulta real en la portada. Todavía no hay pantallas de negocio: no existe el login, ni el alta de productos, ni la venta.</p>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Módulo</th><th>Estado</th><th>Qué hay</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="model">Base del proyecto</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>Next.js 16 con App Router, React 19, TypeScript 5.9, Tailwind 4, Drizzle 0.45 y libSQL. <code>pnpm build</code> compila y pasa el chequeo de tipos.</td>
+                </tr>
+                <tr>
+                  <td class="model">Modelo de datos</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>Diez tablas migradas y dieciocho índices. Una migración generada de 146 líneas de SQL.</td>
+                </tr>
+                <tr>
+                  <td class="model">Datos de prueba</td>
+                  <td><span class="pill ok">Hecho</span></td>
+                  <td>Dos usuarios, tres categorías, seis productos con stock inicial, dos clientes y los contadores en cero.</td>
+                </tr>
+                <tr>
+                  <td class="model">Autenticación</td>
+                  <td><span class="pill warn">Siguiente</span></td>
+                  <td>Falta el login, la cookie firmada y el layout del panel que protege las rutas.</td>
+                </tr>
+                <tr>
+                  <td class="model">Productos y stock</td>
+                  <td><span class="pill">Pendiente</span></td>
+                  <td>Alta, edición, búsqueda, entradas y salidas manuales, y el listado de movimientos.</td>
+                </tr>
+                <tr>
+                  <td class="model">Clientes y cuenta corriente</td>
+                  <td><span class="pill">Pendiente</span></td>
+                  <td>Alta, búsqueda, saldo derivado y registro de pagos.</td>
+                </tr>
+                <tr>
+                  <td class="model">Ventas y facturación</td>
+                  <td><span class="pill">Pendiente</span></td>
+                  <td>Carrito, verificación de stock, transacción completa y comprobante con número.</td>
+                </tr>
+                <tr>
+                  <td class="model">Tablero</td>
+                  <td><span class="pill">Pendiente</span></td>
+                  <td>Ventas del día y del mes, productos bajo mínimo y deuda total.</td>
+                </tr>
+                <tr>
+                  <td class="model">Publicación</td>
+                  <td><span class="pill">Pendiente</span></td>
+                  <td>Turso para la base y Vercel para la aplicación, con las variables cargadas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="prose">
+            <h3>Los archivos que existen</h3>
+            <p>El árbol real, no el ideal. Cada archivo tiene una responsabilidad y un tamaño que se puede revisar de una sentada.</p>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Archivo</th><th>Líneas</th><th>Qué hace</th></tr></thead>
+              <tbody>
+                <tr><td class="model">src/db/schema.ts</td><td>244</td><td>Las diez tablas, sus columnas, índices y relaciones. Es la fuente de los tipos.</td></tr>
+                <tr><td class="model">src/db/seed.ts</td><td>117</td><td>Borra y vuelve a cargar los datos de prueba. Se puede correr las veces que haga falta.</td></tr>
+                <tr><td class="model">src/app/page.tsx</td><td>78</td><td>Portada de verificación: consulta la base y muestra el conteo de cada tabla.</td></tr>
+                <tr><td class="model">src/db/client.ts</td><td>19</td><td>Una sola conexión por proceso, con la URL y el token de <code>.env</code>.</td></tr>
+                <tr><td class="model">src/app/layout.tsx</td><td>14</td><td>El HTML base, el idioma y la tipografía del sistema.</td></tr>
+                <tr><td class="model">drizzle/0000_skinny_toxin.sql</td><td>146</td><td>La migración generada: <code>CREATE TABLE</code> e índices.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="prose">
+            <p>Alrededor de esos seis archivos hay configuración: <code>package.json</code> con las dependencias y los comandos, <code>drizzle.config.ts</code> con el destino de la base, <code>next.config.ts</code>, <code>postcss.config.mjs</code> para Tailwind, <code>tsconfig.json</code>, <code>.env.example</code> y <code>pnpm-workspace.yaml</code>, que habilita los tres paquetes que compilan código nativo.</p>
+          </div>
+
+          <figure class="code">
+            <p class="cap"><b>Puesta en marcha</b><span>Lo que corre hoy</span></p>
+<pre><code class="lang-bash" data-lang="bash"><span class="t-fn">pnpm</span> install
+<span class="t-fn">cp</span> .env.example .env       <span class="t-com"># completar AUTH_SECRET</span>
+<span class="t-fn">pnpm</span> db:migrate            <span class="t-com"># crea local.db con las diez tablas</span>
+<span class="t-fn">pnpm</span> db:seed               <span class="t-com"># carga los datos de prueba</span>
+<span class="t-fn">pnpm</span> dev                   <span class="t-com"># http://localhost:3000</span></code></pre>
+          </figure>
+
+          <div class="prose">
+            <h3>Qué se ve al entrar</h3>
+            <p>Una pantalla que lee la base en cada pedido y muestra el motor, la URL y el conteo de filas: usuarios 2, categorias 3, productos 6, clientes 2, facturas 0. No es una pantalla del sistema: es la prueba de que la cadena Next → Drizzle → libSQL → SQLite funciona de punta a punta.</p>
+          </div>
+
+          <div class="note">
+            <p><strong>Cómo se mantiene esta sección.</strong> Al terminar cada paso se reescriben la tabla de módulos, el árbol de archivos y las líneas. Si un archivo cambia de nombre, se actualiza acá y en las referencias de la sección 03. La guía y el código no se separan.</p>
           </div>
         </section>
       </div>
